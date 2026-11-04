@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Validador Topológico</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<header class="bar"><div class="brand"><span class="mark">VT</span><div><strong>Validador Topológico</strong><small>Carta Topográfica</small></div></div><span class="badge">INEGI · prototipo</span></header>
+<main class="shell">
+  <section class="hero">
+    <p class="eyebrow">CONTROL DE CALIDAD GEOESPACIAL</p>
+    <h1>Valida tus capas.<br><span>Detecta los errores.</span></h1>
+    <p class="lead">Carga las capas involucradas. El motor identifica cada capa, consulta sus reglas y ejecuta automáticamente las validaciones topológicas aplicables.</p>
+  </section>
+
+  <section class="panel">
+    <form id="uploadForm">
+      <label id="dropzone" class="dropzone" for="fileInput">
+        <div class="icon">⇧</div>
+        <strong>Arrastra aquí tus capas GeoParquet</strong>
+        <span>o pulsa para seleccionar archivos</span>
+        <small>Primera integración: archivos .parquet</small>
+      </label>
+      <input id="fileInput" type="file" name="layers" accept=".parquet" multiple hidden>
+      <div id="fileList" class="file-list"></div>
+      <button id="validateBtn" class="primary" type="submit" disabled>Iniciar validación</button>
+    </form>
+  </section>
+
+  <section id="status" class="status hidden"></section>
+  <section id="results" class="results hidden"></section>
+</main>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+Flask>=3.0,<4
+Werkzeug>=3.0,<4
+geopandas
+dask-geopandas
+dask[distributed]
+pyarrow
+shapely
+pyogrio
