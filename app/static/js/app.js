@@ -14,6 +14,17 @@ form.addEventListener('submit',async e=>{e.preventDefault(); if(!selected.length
     results.classList.add('hidden');
     try{
         const r=await fetch('/api/validate',{method:'POST',body:data});
-        const payload=await r.json();if(!r.ok||!payload.ok)
-            throw new Error(payload.message||'No fue posible validar.');render(payload);}catch(err){statusBox.innerHTML=`<strong class="bad">No se completó la validación</strong><p>${err.message}</p>`;}finally{btn.disabled=false;}});
-function render(p){statusBox.innerHTML=`<strong>Validación terminada</strong><p>Trabajo ${p.job_id.slice(0,8)} · ${p.layers.length} capa(s)</p>`;const totalRules=p.results.reduce((a,x)=>a+x.rule_count,0),totalErrors=p.results.reduce((a,x)=>a+x.error_count,0);results.classList.remove('hidden');results.innerHTML=`<div class="summary"><div class="metric"><span>Capas</span><strong>${p.results.length}</strong></div><div class="metric"><span>Reglas ejecutadas</span><strong>${totalRules}</strong></div><div class="metric"><span>Errores detectados</span><strong class="${totalErrors?'bad':'ok'}">${totalErrors}</strong></div></div>`+p.results.map(layer=>`<h2>${layer.layer}</h2><p>${layer.rule_count} reglas · ${layer.error_count} errores</p>${layer.rules.map(r=>`<div class="rule"><strong>${r.name}</strong><span>${r.time||'—'}</span><span class="${r.count?'bad':'ok'}">${r.count} error(es)</span></div>`).join('')}${(layer.execution_errors||[]).map(x=>`<div class="rule bad"><strong>${x.rule}</strong><span>${x.message}</span></div>`).join('')}`).join('');}
+        const payload=await r.json();
+        if(!r.ok||!payload.ok)
+            throw new Error(payload.message||'No fue posible validar.');
+        render(payload);
+    }catch(err){
+        statusBox.innerHTML=`<strong class="bad">No se completó la validación</strong><p>${err.message}</p>`;
+    }finally{
+        btn.disabled=false;
+    }});
+function render(p){
+    statusBox.innerHTML=`<strong>Validación terminada</strong><p>Trabajo ${p.job_id.slice(0,8)} · ${p.layers.length} capa(s)</p>`;
+    const totalRules=p.results.reduce((a,x)=>a+x.rule_count,0),totalErrors=p.results.reduce((a,x)=>a+x.error_count,0);
+    results.classList.remove('hidden');
+    results.innerHTML=`<div class="summary"><div class="metric"><span>Capas</span><strong>${p.results.length}</strong></div><div class="metric"><span>Reglas ejecutadas</span><strong>${totalRules}</strong></div><div class="metric"><span>Errores detectados</span><strong class="${totalErrors?'bad':'ok'}">${totalErrors}</strong></div></div>`+p.results.map(layer=>`<h2>${layer.layer}</h2><p>${layer.rule_count} reglas · ${layer.error_count} errores</p>${layer.rules.map(r=>`<div class="rule"><strong>${r.name}</strong><span>${r.time||'—'}</span><span class="${r.count?'bad':'ok'}">${r.count} error(es)</span></div>`).join('')}${(layer.execution_errors||[]).map(x=>`<div class="rule bad"><strong>${x.rule}</strong><span>${x.message}</span></div>`).join('')}`).join('');}
