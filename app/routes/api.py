@@ -19,23 +19,15 @@ def validate():
         return jsonify(ok=False, message=f"Error durante la validación: {exc}"), 500
 
 
-@api_bp.get("/download/<job_id>")
-def download(job_id):
+@api_bp.get("/download/<job_id>/<filename>")
+def download(job_id, filename):
     from flask import send_from_directory, current_app
     import os
-
     upload_folder = current_app.config["UPLOAD_FOLDER"]
     job_folder = os.path.join(upload_folder, job_id)
     if not os.path.exists(job_folder):
         return jsonify(ok=False, message="Trabajo no encontrado."), 404
-
-    # Crear un archivo comprimido con todos los resultados de errores
-    job_folder = os.path.join(upload_folder, job_id)
-    if not os.path.exists(job_folder):
-        return jsonify(ok=False, message="Trabajo no encontrado."), 404 
-    
-    zip_filename = f"errores_{job_id}.gpkg"
-    zip_path = os.path.join(job_folder, zip_filename)
-    #shutil.make_archive(zip_path.replace('.gpkg', ''), 'zip', job_folder)
-
-    return send_from_directory(job_folder, zip_path, as_attachment=True)   
+   # print(job_folder)
+    #shutil.make_archive(f"{job_folder}/errores_{filename}.gpkg", 'zip', job_folder.split("uploads")[0].replace("\\", "/") + f"results")
+    #shutil.make_archive(f"{job_folder}/errores_{filename}.gpkg", 'zip', job_folder.split("uploads")[0].replace("\\", "/") + f"results")
+    return send_from_directory(job_folder, f"errores_{filename}.gpkg", as_attachment=True )

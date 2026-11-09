@@ -76,7 +76,7 @@ function render(payload) {
 
     let $resultados = $("<div>").html("Validación Terminada").addClass("resultados");
     let $totales = $("<div>").html(`Trabajo ${payload.job_id.slice(0, 8)} · ${payload.layers.length} capa(s)`).addClass("totales");
-    let $descargar = $("<div>").html($("<a>").attr("href", `/api/download/${payload.job_id}`).text("Descargar errores")).addClass("descargar");
+    let $descargar = $("<div>").html($("<a>").attr("href", `/api/download/${payload.job_id}/${payload.layers[0]}`).text("⇩")).append("Descargar").addClass("descargar");
     $status.html($resultados).append($totales).append($descargar);
 
     const totalRules = payload.results.reduce(
