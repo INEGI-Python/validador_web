@@ -28,7 +28,7 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 0 max(24px, calc((100vw - 1120px) / 2));
+	padding: 0 max(10px, calc((70vw - 1120px) / 2));
 }
 
 .brand {

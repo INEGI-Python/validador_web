@@ -2,6 +2,8 @@ import mimetypes
 import tempfile
 from pathlib import Path
 
+import os
+
 from flask import Blueprint, Response, current_app, jsonify, request
 from werkzeug.utils import secure_filename
 from app.services.geospatial import (
@@ -18,6 +20,36 @@ from app.services.rules_service import (
 )
 
 api_bp = Blueprint("api", __name__)
+
+
+def _get_windows_client_user():
+    candidates = (
+        "X-Forwarded-User",
+        "X-Windows-Username",
+        "Remote-User",
+        "REMOTE_USER",
+        "X-Remote-User",
+    )
+    for name in candidates:
+        value = request.headers.get(name)
+        if value:
+            return value
+
+    environ_names = ("USERNAME", "USER")
+    for name in environ_names:
+        value = os.environ.get(name)
+        if value:
+            return value
+
+    return request.environ.get("REMOTE_USER")
+
+
+@api_bp.get("/client-user")
+def client_user():
+    username = _get_windows_client_user()
+    if not username:
+        return jsonify(ok=False, message="No se pudo determinar el usuario de Windows del cliente."), 404
+    return jsonify(ok=True, username=username)
 
 
 def _save_source_files(uploads, directory, allowed_formats):

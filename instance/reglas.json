@@ -89,5 +89,93 @@
       "funcion": "topo.intersecar_mismo('Intersecar_Mismo')",
       "metodo": "intersecar_mismo"
     }
+  },
+  "capa_prueba_l": {
+    "no_separado_de": {
+      "funcion": "topo.noSeparado('no_separado_de')",
+      "metodo": "noSeparado",
+      "capas": [
+        "corriente_agua_l",
+        "acueducto_l"
+      ],
+      "tolerancia": 1.0
+    },
+    "Pseudonodos": {
+      "funcion": "topo.pseudonodos('Pseudonodos')",
+      "metodo": "pseudonodos",
+      "capas": [
+        "acueducto_l"
+      ],
+      "tolerancia": 1.0
+    },
+    "Sobreponido": {
+      "funcion": "topo.sobreponerse('Sobreponido')",
+      "metodo": "sobreponerse",
+      "capas": [
+        "acueducto_l",
+        "corriente_agua_l"
+      ],
+      "tolerancia": 0.1
+    },
+    "Sobreponerse_Mismo": {
+      "funcion": "topo.sobreponerse_mismo('Sobreponerse_Mismo')",
+      "metodo": "sobreponerse_mismo",
+      "capas": [
+        "capa_prueba_p"
+      ],
+      "tolerancia": 0.001
+    },
+    "Intersecarse_mesmamente": {
+      "funcion": "topo.intersecar_mismo('Intersecarse_mesmamente')",
+      "metodo": "intersecar_mismo",
+      "capas": [
+        "curva_nivel_l"
+      ],
+      "tolerancia": 0.1,
+      "excepciones": "asd"
+    },
+    "Multiparte": {
+      "funcion": "topo.multiparte('Multiparte')",
+      "metodo": "multiparte",
+      "capas": [
+        "curva_nivel_l"
+      ],
+      "tolerancia": 0.0
+    },
+    "Sobreponido_con": {
+      "funcion": "topo.sobreponerse_con('Sobreponido_con')",
+      "metodo": "sobreponerse_con",
+      "capas": [
+        "corriente_agua_l"
+      ],
+      "tolerancia": 0.0
+    },
+    "Extremos_No_Conectan": {
+      "funcion": "topo.extremos_no_conectan('Extremos_No_Conectan')",
+      "metodo": "extremos_no_conectan",
+      "capas": [
+        "dasdgzdczsgasdg"
+      ],
+      "tolerancia": 1000.0,
+      "excepciones": "2"
+    }
+  },
+  "capa_prueba_2_l": {
+    "Fuera_De": {
+      "funcion": "topo.fueraDe('Fuera_De')",
+      "metodo": "fueraDe",
+      "capas": [
+        "corriente_agua_l"
+      ],
+      "tolerancia": 0.001
+    },
+    "Sobreponerse_Con": {
+      "funcion": "topo.sobreponerse_con('Sobreponerse_Con')",
+      "metodo": "sobreponerse_con",
+      "capas": [
+        "curva_nivel_l"
+      ],
+      "tolerancia": 0.01
+    }
   }
 }

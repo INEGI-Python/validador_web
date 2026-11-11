@@ -7,6 +7,9 @@ const statusBox = document.querySelector('#status');
 const results = document.querySelector('#results');
 
 $(document).ready(function() {
+    $.get("/api/client-user", function(data) {
+    $("#userBadge").text(`INEGI · ${data.username || 'Usuario'}`);
+    });
     // Check if the browser supports drag and drop
     if (!('draggable' in document.createElement('span'))) {
         zone.classList.add('hidden');
@@ -24,6 +27,7 @@ $(document).ready(function() {
     });
   });
   loadRuleConfiguration();
+
 });
 
 
@@ -406,50 +410,3 @@ function render(payload) {
     $("#results").html($results).removeClass("hidden");
 }       
 
-/*
-    statusBox.innerHTML = `<strong>Validación terminada </strong><p>Trabajo ${payload.job_id.slice(0, 8)} · ${payload.layers.length} capa(s)</p>`;
-    statusBox.appendChild(document.createElement('a').setAttribute('href', `/api/download/${payload.job_id}`).setProperty('textContent', 'Descargar errores'));
-    const totalRules = payload.results.reduce(
-        (total, result) => total + result.rule_count,
-        0,
-    );
-    const totalErrors = payload.results.reduce(
-        (total, result) => total + result.error_count,
-        0,
-    );
-    
-
-    results.classList.remove('hidden');
-    results.innerHTML =
-        `<div class="summary">
-            <div class="metric"><span>Capas</span><strong>${payload.results.length}</strong></div>
-            <div class="metric"><span>Reglas ejecutadas</span><strong>${totalRules}</strong></div>
-            <div class="metric"><span>Errores detectados</span><strong class="${totalErrors ? 'bad' : 'ok'}">${totalErrors}</strong></div>
-        </div>` +
-        payload.results
-            .map(
-                (layer) =>
-                    `<h2>${layer.layer}</h2>
-                    <p>${layer.rule_count} reglas · ${layer.error_count} errores</p>
-                  
-                    ${layer.rules
-                        .map(
-                            (rule) =>
-                                `<div class="rule">
-                                    <strong>${rule.name}</strong>
-                                    <span>${rule.time || '—'}</span>
-                                    <span class="${rule.count ? 'bad' : 'ok'}">${rule.count} error(es)</span>
-                                </div>`,
-                        )
-                        .join('')}
-                    ${(layer.execution_errors || [])
-                        .map(
-                            (error) =>
-                                `<div class="rule bad"><strong>${error.rule}</strong><span>${error.message}</span></div>`,
-                        )
-                        .join('')}`,
-            )
-            .join('');
-
-
-}*/

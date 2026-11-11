@@ -8,7 +8,7 @@
   
 </head>
 <body>
-<header class="bar"><div class="brand"><span class="mark">VT</span><div><strong>Validador Topológico</strong><small>Carta Topográfica</small></div></div><span class="badge">INEGI · prototipo</span></header>
+<header class="bar"><div class="brand"><span class="mark"><img src="{{ url_for('static', filename='img/logoINEGI.png') }}" width="38" height="38" alt="Logo"></span><div><strong>Validador Topológico</strong><small>Carta Topográfica</small></div></div><span id="userBadge" class="badge">INEGI · {{ usuario_actual }}</span></header>
 <aside class="side-menu" aria-label="Menú principal">
   <nav>
     <a href="#validador" aria-current="page">
@@ -125,7 +125,8 @@
     </form>
   </section>
 </main>
-<script src="{{ url_for('static', filename='js/jquery.js') }}" crossorigin="anonymous"></script>
+
+<script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
 
 
 
