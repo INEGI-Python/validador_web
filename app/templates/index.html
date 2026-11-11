@@ -3,19 +3,29 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Validador Topológico</title>
+  <title>Informacion Topografica</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  
 </head>
 <body>
 <header class="bar"><div class="brand"><span class="mark">VT</span><div><strong>Validador Topológico</strong><small>Carta Topográfica</small></div></div><span class="badge">INEGI · prototipo</span></header>
-<main class="shell">
-  <section class="hero">
-    <p class="eyebrow">CONTROL DE CALIDAD GEOESPACIAL</p>
-    <h1>Valida tus capas.<br><span>Detecta los errores.</span></h1>
-    <p class="lead">Carga las capas involucradas. El motor identifica cada capa, consulta sus reglas y ejecuta automáticamente las validaciones topológicas aplicables.</p>
-  </section>
+<aside class="side-menu" aria-label="Menú principal">
+  <nav>
+    <a href="#validador" aria-current="page">Validador Topológico</a>
+    <a href="#convertir-a-geoparquet">Convertir a GeoParquet</a>
+    <a href="#reproyectar-capa">Reproyectar Capa</a>
+  </nav>
+</aside>
 
-  <section class="panel">
+
+<main  class="shell">
+  <section id="validador" class="panel">
+    <div class="hero">
+      <p class="eyebrow">CONTROL DE CALIDAD GEOESPACIAL</p>
+      <h1>Valida tus capas.<br><span>Detecta los errores.</span></h1>
+      <p class="lead">Carga las capas involucradas. El motor identifica cada capa, consulta sus reglas y ejecuta automáticamente las validaciones topológicas aplicables.</p>
+    </div>
+
     <form id="uploadForm">
       <label id="dropzone" class="dropzone" for="fileInput">
         <div class="icon">⇧</div>
@@ -31,8 +41,44 @@
 
   <section id="status" class="status hidden"></section>
   <section id="results" class="results hidden"></section>
+
+  <section id="convertir-a-geoparquet" class="panel tool-section" hidden>
+     <div class="hero"></div><h1>Convertir <br><span> a GeoParquet</span></div></h1>
+    <p class="lead">Convierte una capa GeoJSON, GeoPackage o Shapefile a GeoParquet conservando su CRS.</p>
+    <form id="convertFormatForm">
+      <div class="tool-fields">
+        <label class="tool-field" for="formatFile">Capa de origen
+          <input id="formatFile" name="files" type="file" accept=".geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" multiple required>
+        </label>
+      </div>
+      <p class="tool-hint">Para Shapefile, selecciona juntos los archivos .shp, .shx y .dbf. Si el GeoPackage contiene varias capas se convertirá la primera.</p>
+      <button class="primary" type="submit">Convertir a GeoParquet</button>
+      <p id="convertStatus" class="tool-status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section id="reproyectar-capa" class="panel tool-section" hidden>
+    <div class="hero"></div><h1>Reproyectar<br><span> Capa</span></div></h1>
+    <p class="lead">Selecciona una capa con CRS definido y especifica el código EPSG de destino. El resultado conservará el formato de origen.</p>
+    <form id="reprojectLayerForm">
+      <div class="tool-fields">
+        <label class="tool-field" for="reprojectFile">Capa de origen
+          <input id="reprojectFile" name="files" type="file" accept=".parquet,.geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" multiple required>
+        </label>
+        <label class="tool-field" for="targetCrs">Sistema de referencia de destino (EPSG)
+          <input id="targetCrs" name="targetCrs" type="text" placeholder="Ej. EPSG:4326" pattern="(EPSG:)?[0-9]+" required>
+        </label>
+      </div>
+      <p class="tool-hint">Para Shapefile, selecciona juntos los archivos .shp, .shx y .dbf. El resultado se descargará como un archivo ZIP.</p>
+      <button class="primary" type="submit">Reproyectar capa</button>
+      <p id="reprojectStatus" class="tool-status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
 </main>
-<script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='js/jquery.js') }}" crossorigin="anonymous"></script>
+
+
+
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

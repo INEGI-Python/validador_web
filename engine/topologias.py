@@ -11,10 +11,10 @@ from .reglas import topologicas
 
 
 class Topo:
-    def __init__(self,ruta,capa,datos):
+    def __init__(self,ruta,capa,reglas):
         self.ruta = ruta
         self.capa = capa
-        self.reglas = datos
+        self.reglas = reglas
         self.data_sort = self.cargarDatos()
         self.errores = {}
 

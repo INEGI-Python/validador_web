@@ -6,6 +6,26 @@ const form = document.querySelector('#uploadForm');
 const statusBox = document.querySelector('#status');
 const results = document.querySelector('#results');
 
+$(document).ready(function() {
+    // Check if the browser supports drag and drop
+    if (!('draggable' in document.createElement('span'))) {
+        zone.classList.add('hidden');
+        input.classList.remove('hidden');
+    }
+  document.querySelectorAll('.side-menu a').forEach(function(link){
+        
+    link.addEventListener('click',function(e){
+      $("section").hide();
+      $(`${$(e)[0].target.hash}`).show();
+
+      document.querySelectorAll('.side-menu a').forEach(function(item){item.removeAttribute('aria-current')});
+      link.setAttribute('aria-current','page');
+    });
+  });
+});
+
+
+
 let selected=[];
 function setFiles(files) {
     selected = [...files].filter((file) =>
@@ -69,6 +89,72 @@ form.addEventListener('submit', async (event) => {
         btn.disabled = false;
     }
 });
+
+function connectToolForm(formId, statusId, endpoint, progressMessage, successMessage) {
+    const toolForm = document.querySelector(`#${formId}`);
+    const toolStatus = document.querySelector(`#${statusId}`);
+    const toolButton = toolForm.querySelector('button[type="submit"]');
+
+    toolForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!toolForm.reportValidity()) return;
+
+        toolButton.disabled = true;
+        toolStatus.classList.remove('error');
+        toolStatus.textContent = progressMessage;
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                body: new FormData(toolForm),
+            });
+            if (!response.ok) {
+                let message = `No se completó la operación (HTTP ${response.status}).`;
+                try {
+                    const payload = await response.json();
+                    if (payload.message) message = payload.message;
+                } catch {
+                    // The server may return a non-JSON error page.
+                }
+                throw new Error(message);
+            }
+
+            const file = await response.blob();
+            const disposition = response.headers.get('Content-Disposition') || '';
+            const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+            const filename = filenameMatch ? filenameMatch[1] : 'capa-procesada';
+            const url = URL.createObjectURL(file);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = filename;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            downloadLink.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            toolStatus.textContent = successMessage;
+        } catch (error) {
+            toolStatus.classList.add('error');
+            toolStatus.textContent = error.message || 'No se pudo procesar la capa.';
+        } finally {
+            toolButton.disabled = false;
+        }
+    });
+}
+
+connectToolForm(
+    'convertFormatForm',
+    'convertStatus',
+    '/api/convert',
+    'Convirtiendo capa…',
+    'Conversión terminada. La descarga ha comenzado.',
+);
+connectToolForm(
+    'reprojectLayerForm',
+    'reprojectStatus',
+    '/api/reproject',
+    'Reproyectando capa…',
+    'Reproyección terminada. La descarga ha comenzado.',
+);
 
 function render(payload) {
     let $status = $("#status");
@@ -164,5 +250,3 @@ function render(payload) {
 
 
 }*/
-
-
