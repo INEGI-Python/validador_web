@@ -10,6 +10,12 @@ from app.services.geospatial import (
     reproject_layer,
 )
 from app.services.validation_service import prepare_and_validate
+from app.services.rules_service import (
+    RULE_METHODS,
+    add_layer_rules,
+    delete_rule,
+    load_rules,
+)
 
 api_bp = Blueprint("api", __name__)
 
@@ -115,6 +121,46 @@ def validate():
         return jsonify(ok=False, message=str(exc)), 400
     except Exception as exc:
         return jsonify(ok=False, message=f"Error durante la validación: {exc}"), 500
+
+
+@api_bp.get("/rules")
+def get_rules():
+    try:
+        return jsonify(
+            ok=True,
+            layers=load_rules(),
+            methods=[
+                {"method": method, "name": name}
+                for method, name in RULE_METHODS.items()
+            ],
+        )
+    except RuntimeError as exc:
+        current_app.logger.exception("No se pudo cargar la configuración de reglas.")
+        return jsonify(ok=False, message=str(exc)), 500
+
+
+@api_bp.post("/rules")
+def create_layer_rules():
+    try:
+        layer_name, rules = add_layer_rules(request.get_json(silent=True))
+        return jsonify(ok=True, layer=layer_name, rules=rules), 201
+    except ValueError as exc:
+        return jsonify(ok=False, message=str(exc)), 400
+    except RuntimeError as exc:
+        current_app.logger.exception("No se pudo guardar la configuración de reglas.")
+        return jsonify(ok=False, message=str(exc)), 500
+
+
+@api_bp.delete("/rules/<layer_name>/<rule_name>")
+def remove_layer_rule(layer_name, rule_name):
+    try:
+        rules = delete_rule(layer_name, rule_name)
+        return jsonify(ok=True, layers=rules)
+    except ValueError as exc:
+        return jsonify(ok=False, message=str(exc)), 404
+    except RuntimeError as exc:
+        current_app.logger.exception("No se pudo eliminar la regla.")
+        return jsonify(ok=False, message=str(exc)), 500
 
 
 @api_bp.post("/convert")

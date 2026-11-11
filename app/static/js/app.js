@@ -14,14 +14,16 @@ $(document).ready(function() {
     }
   document.querySelectorAll('.side-menu a').forEach(function(link){
         
-    link.addEventListener('click',function(e){
-      $("section").hide();
-      $(`${$(e)[0].target.hash}`).show();
+    link.addEventListener('click',function(){
+      document.querySelectorAll('#validador, #convertir-a-geoparquet, #reproyectar-capa, #configurar-reglas').forEach(function(section){
+        section.hidden = section.id !== link.hash.slice(1);
+      });
 
       document.querySelectorAll('.side-menu a').forEach(function(item){item.removeAttribute('aria-current')});
       link.setAttribute('aria-current','page');
     });
   });
+  loadRuleConfiguration();
 });
 
 
@@ -155,6 +157,207 @@ connectToolForm(
     'Reproyectando capa…',
     'Reproyección terminada. La descarga ha comenzado.',
 );
+
+const addLayerRulesForm = document.querySelector('#addLayerRulesForm');
+addLayerRulesForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!addLayerRulesForm.reportValidity()) return;
+
+    const selectedRules = [...document.querySelectorAll('.rule-option:checked')];
+    if (!selectedRules.length) {
+        setRulesStatus('Selecciona al menos una regla.', true);
+        return;
+    }
+
+    const rules = selectedRules.map((checkbox) => {
+        const option = checkbox.closest('.available-rule');
+        return {
+            method: checkbox.value,
+            name: option.querySelector('[data-rule-name]').value.trim(),
+            layers: option.querySelector('[data-rule-layers]').value
+                .split(',')
+                .map((layer) => layer.trim())
+                .filter(Boolean),
+            tolerance: option.querySelector('[data-rule-tolerance]').value,
+            exceptions: option.querySelector('[data-rule-exceptions]').value.trim(),
+        };
+    });
+
+    const button = document.querySelector('#saveLayerRules');
+    button.disabled = true;
+    setRulesStatus('Guardando configuración…');
+    try {
+        const response = await fetch('/api/rules', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                layer: document.querySelector('#ruleLayerName').value.trim(),
+                rules,
+            }),
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+            throw new Error(payload.message || 'No se pudo guardar la configuración.');
+        }
+
+        addLayerRulesForm.reset();
+        await loadRuleConfiguration();
+        setRulesStatus(`Se guardaron las reglas de ${payload.layer}.`);
+    } catch (error) {
+        setRulesStatus(error.message || 'No se pudo guardar la configuración.', true);
+    } finally {
+        button.disabled = false;
+    }
+});
+
+async function loadRuleConfiguration() {
+    const configuredRules = document.querySelector('#configuredRules');
+    const availableRules = document.querySelector('#availableRules');
+    configuredRules.textContent = 'Cargando reglas…';
+    availableRules.replaceChildren();
+
+    try {
+        const response = await fetch('/api/rules');
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+            throw new Error(payload.message || 'No se pudieron cargar las reglas.');
+        }
+
+        renderConfiguredRules(payload.layers);
+        renderAvailableRules(payload.methods);
+    } catch (error) {
+        configuredRules.textContent = error.message || 'No se pudieron cargar las reglas.';
+    }
+}
+
+function renderConfiguredRules(layers) {
+    const container = document.querySelector('#configuredRules');
+    container.replaceChildren();
+    const layerNames = Object.keys(layers).sort();
+    if (!layerNames.length) {
+        container.textContent = 'No hay capas con reglas configuradas.';
+        return;
+    }
+
+    layerNames.forEach((layerName) => {
+        const card = document.createElement('details');
+        card.className = 'configured-layer';
+        const summary = document.createElement('summary');
+        const title = document.createElement('strong');
+        title.textContent = layerName;
+        const count = document.createElement('span');
+        const entries = Object.entries(layers[layerName] || {});
+        count.className = 'rule-count';
+        count.textContent = `${entries.length} regla${entries.length === 1 ? '' : 's'}`;
+        summary.append(title, count);
+        card.append(summary);
+
+        const list = document.createElement('ul');
+        entries.forEach(([name, rule]) => {
+            const item = document.createElement('li');
+            const method = rule.metodo || (rule.funcion || '').replace(/^topo\./, '').split('(')[0];
+            const details = [];
+            if (rule.capas && rule.capas.length) details.push(`capas: ${rule.capas.join(', ')}`);
+            if (rule.tolerancia !== undefined) details.push(`tolerancia: ${rule.tolerancia}`);
+            if (rule.excepciones || rule.excepcion) details.push(`excepciones: ${rule.excepciones || rule.excepcion}`);
+            const description = document.createElement('span');
+            description.className = 'configured-rule-description';
+            description.textContent = `${name} — ${method}${details.length ? ` (${details.join('; ')})` : ''}`;
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'delete-rule';
+            deleteButton.type = 'button';
+            deleteButton.textContent = 'Eliminar';
+            deleteButton.setAttribute('aria-label', `Eliminar regla ${name} de ${layerName}`);
+            deleteButton.addEventListener('click', () => removeConfiguredRule(layerName, name));
+            item.append(description, deleteButton);
+            list.append(item);
+        });
+        card.append(list);
+        container.append(card);
+    });
+}
+
+async function removeConfiguredRule(layerName, ruleName) {
+    if (!window.confirm(`¿Eliminar la regla "${ruleName}" de "${layerName}"?`)) return;
+
+    setRulesStatus('Eliminando regla…');
+    try {
+        const response = await fetch(
+            `/api/rules/${encodeURIComponent(layerName)}/${encodeURIComponent(ruleName)}`,
+            {method: 'DELETE'},
+        );
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+            throw new Error(payload.message || 'No se pudo eliminar la regla.');
+        }
+
+        renderConfiguredRules(payload.layers);
+        setRulesStatus(
+            payload.layers[layerName]
+                ? `Se eliminó la regla ${ruleName}.`
+                : `Se eliminó la última regla y la capa ${layerName}.`,
+        );
+    } catch (error) {
+        setRulesStatus(error.message || 'No se pudo eliminar la regla.', true);
+    }
+}
+
+function renderAvailableRules(methods) {
+    const container = document.querySelector('#availableRules');
+    container.replaceChildren();
+    methods.forEach(({method, name}) => {
+        const card = document.createElement('div');
+        card.className = 'available-rule';
+        const heading = document.createElement('label');
+        heading.className = 'rule-choice';
+        const checkbox = document.createElement('input');
+        checkbox.className = 'rule-option';
+        checkbox.type = 'checkbox';
+        checkbox.value = method;
+        const title = document.createElement('strong');
+        title.textContent = name;
+        const methodName = document.createElement('span');
+        methodName.textContent = method;
+        heading.append(checkbox, title, methodName);
+
+        const details = document.createElement('div');
+        details.className = 'rule-details hidden';
+        details.append(
+            createRuleField('Nombre de regla', 'rule-name', name),
+            createRuleField('Capas relacionadas (separadas por coma)', 'rule-layers', ''),
+            createRuleField('Tolerancia', 'rule-tolerance', '', 'number'),
+            createRuleField('Excepciones', 'rule-exceptions', ''),
+        );
+        card.append(heading, details);
+        checkbox.addEventListener('change', () => {
+            details.classList.toggle('hidden', !checkbox.checked);
+            details.querySelector('[data-rule-name]').required = checkbox.checked;
+        });
+        container.append(card);
+    });
+}
+
+function createRuleField(labelText, fieldName, value, type = 'text') {
+    const label = document.createElement('label');
+    label.className = 'tool-field';
+    label.append(document.createTextNode(labelText));
+    const input = document.createElement('input');
+    input.type = type;
+    input.setAttribute(`data-${fieldName}`, '');
+    input.value = value;
+    if (type === 'number') {
+        input.min = '0';
+        input.step = 'any';
+    }
+    label.append(input);
+    return label;
+}
+
+function setRulesStatus(message, isError = false) {
+    const status = document.querySelector('#rulesStatus');
+    status.textContent = message;
+    status.classList.toggle('error', isError);
+}
 
 function render(payload) {
     let $status = $("#status");

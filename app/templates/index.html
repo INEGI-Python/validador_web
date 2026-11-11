@@ -11,9 +11,36 @@
 <header class="bar"><div class="brand"><span class="mark">VT</span><div><strong>Validador Topológico</strong><small>Carta Topográfica</small></div></div><span class="badge">INEGI · prototipo</span></header>
 <aside class="side-menu" aria-label="Menú principal">
   <nav>
-    <a href="#validador" aria-current="page">Validador Topológico</a>
-    <a href="#convertir-a-geoparquet">Convertir a GeoParquet</a>
-    <a href="#reproyectar-capa">Reproyectar Capa</a>
+    <a href="#validador" aria-current="page">
+      <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 3 19 6v5c0 4.5-2.9 7.7-7 10-4.1-2.3-7-5.5-7-10V6l7-3Z"/>
+        <path d="m9 12 2 2 4-4"/>
+      </svg>
+      <span>Validador Topológico</span>
+    </a>
+    <a href="#convertir-a-geoparquet">
+      <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 3v12"/>
+        <path d="m8 7 4-4 4 4"/>
+        <path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>
+      </svg>
+      <span>Convertir a GeoParquet</span>
+    </a>
+    <a href="#reproyectar-capa">
+      <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>
+      </svg>
+      <span>Reproyectar Capa</span>
+    </a>
+    <a href="#configurar-reglas">
+      <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M4 7h9m4 0h3M4 17h3m4 0h9"/>
+        <circle cx="15" cy="7" r="2"/>
+        <circle cx="9" cy="17" r="2"/>
+      </svg>
+      <span>Configurar Reglas</span>
+    </a>
   </nav>
 </aside>
 
@@ -72,6 +99,29 @@
       <p class="tool-hint">Para Shapefile, selecciona juntos los archivos .shp, .shx y .dbf. El resultado se descargará como un archivo ZIP.</p>
       <button class="primary" type="submit">Reproyectar capa</button>
       <p id="reprojectStatus" class="tool-status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section id="configurar-reglas" class="panel tool-section" hidden>
+    <div class="hero">
+      <p class="eyebrow">CONFIGURACIÓN DEL MOTOR</p>
+      <h1>Configurar <span>Reglas</span></h1>
+      <p class="lead">Consulta las reglas actuales y agrega capas con los métodos topológicos disponibles.</p>
+    </div>
+    <div class="rules-current">
+      <h2>Reglas actuales</h2>
+      <div id="configuredRules" class="configured-rules" aria-live="polite"></div>
+    </div>
+    <form id="addLayerRulesForm">
+      <h2>Agregar capa</h2>
+      <label class="tool-field" for="ruleLayerName">Nombre de la capa
+        <input id="ruleLayerName" name="layer" type="text" placeholder="Ej. corriente_ag_l" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,99}" required>
+      </label>
+      <p class="tool-hint">Usa el nombre del archivo GeoParquet sin la extensión .parquet. Los métodos Fuera_De, Sobreponerse_Con y Extremos_No_Conectan requieren una capa relacionada.</p>
+      <h3>Reglas para esta capa</h3>
+      <div id="availableRules" class="available-rules"></div>
+      <button id="saveLayerRules" class="primary" type="submit">Guardar capa y reglas</button>
+      <p id="rulesStatus" class="tool-status" role="status" aria-live="polite"></p>
     </form>
   </section>
 </main>

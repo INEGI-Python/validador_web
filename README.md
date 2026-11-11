@@ -20,6 +20,10 @@ La web acepta uno o varios `.parquet`. El nombre base del fichero se usa como no
 - **Reproyectar capa** acepta GeoParquet, GeoJSON, GeoPackage y Shapefile. Requiere que la capa declare un CRS de origen y recibe el código EPSG de destino. El resultado conserva el formato de origen; las reproyecciones de Shapefile se descargan como ZIP.
 - Ambas operaciones se envían mediante `POST` a `/api/convert` y `/api/reproject`. El resultado se descarga al terminar y los archivos temporales se eliminan al cerrar la respuesta.
 
-## Siguiente refactor recomendado
+## Configuración de reglas
 
-Sustituir las expresiones de `reglas.py` como `topo.pseudonodos('Pseudonodos')` por un nombre de metodo, por ejemplo `"metodo": "pseudonodos"`, y resolverlo con `getattr`. Esto elimina `exec/eval` y facilita API, pruebas y seguridad.
+La sección **Configurar Reglas** muestra las reglas base de `engine/reglas.py` en paneles desplegables y permite agregar capas con uno o más métodos topológicos disponibles. Cada regla puede incluir capas relacionadas, tolerancia y excepciones. Las reglas se pueden eliminar individualmente; al quitar la última también se retira la capa configurada. Los nombres de capa deben coincidir con el nombre del archivo GeoParquet sin extensión; los cambios se guardan en `instance/reglas.json` y se cargan en las siguientes validaciones.
+
+## Ejecución del motor
+
+El adaptador web ejecuta las reglas base existentes de forma compatible y las nuevas reglas mediante el campo `metodo`, restringido a los métodos disponibles del motor. El flujo de escritorio en `engine/topologias.py` conserva su ejecución independiente.

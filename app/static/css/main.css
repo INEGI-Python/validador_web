@@ -180,6 +180,111 @@ h1 span {
 	color: var(--red);
 }
 
+.rules-current {
+	margin-bottom: 32px;
+}
+
+.configured-rules,
+.available-rules {
+	display: grid;
+	gap: 12px;
+	margin: 16px 0 24px;
+}
+
+.configured-layer,
+.available-rule {
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	padding: 16px;
+	background: #fbfcfb;
+}
+
+.configured-layer {
+	padding: 0;
+	overflow: hidden;
+}
+
+.configured-layer summary {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 14px 16px;
+	cursor: pointer;
+	list-style-position: inside;
+}
+
+.configured-layer summary:hover {
+	background: #f3f6f9;
+}
+
+.rule-count {
+	margin-left: auto;
+	color: var(--muted);
+	font-size: 13px;
+}
+
+.configured-layer ul {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+	padding: 0 16px 16px 36px;
+	list-style: none;
+}
+
+.configured-layer li {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 10px 12px;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	background: #fff;
+}
+
+.configured-rule-description {
+	overflow-wrap: anywhere;
+}
+
+.delete-rule {
+	flex: 0 0 auto;
+	border: 1px solid #e6baba;
+	border-radius: 7px;
+	padding: 6px 10px;
+	background: #fff;
+	color: var(--red);
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.delete-rule:hover {
+	background: #fff3f3;
+}
+
+.available-rules {
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.rule-choice {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	cursor: pointer;
+}
+
+.rule-choice span {
+	margin-left: auto;
+	color: var(--muted);
+	font-size: 13px;
+}
+
+.rule-details {
+	display: grid;
+	gap: 12px;
+	margin-top: 16px;
+}
+
 .status,
 .results {
 	margin-top: 18px;
@@ -273,7 +378,8 @@ h1 span {
     .bar{position:fixed;top:0;left:0;right:0;z-index:10}
     .side-menu{position:fixed;inset:72px auto 0 0;width:220px;padding:24px 14px;background:#fff;border-right:1px solid #e8ebef;z-index:5}
     .side-menu nav{display:grid;gap:6px}
-    .side-menu a{display:block;padding:12px 14px;border-radius:8px;color:#596579;text-decoration:none;font-size:.92rem;transition:background .15s,color .15s}
+    .side-menu a{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;color:#596579;text-decoration:none;font-size:.92rem;transition:background .15s,color .15s}
+    .side-menu .menu-icon{width:20px;height:20px;flex:0 0 20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
     .side-menu a:hover{background:#f3f6f9;color:#182230}
     .side-menu a[aria-current="page"]{background:#edf4fa;color:#176b9b;font-weight:600}
     .shell{margin-left:220px;padding-top:72px}

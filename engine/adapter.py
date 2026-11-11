@@ -4,6 +4,9 @@ Coloca tus archivos reglas.py y topologias.py en este directorio (engine/) o aju
 los imports. El adaptador evita que la capa web conozca detalles de GeoPandas/Dask.
 """
 from pathlib import Path
+import ast
+
+from app.services.rules_service import RULE_METHODS, load_rules
 
 try:
     from .reglas import topologicas
@@ -20,13 +23,37 @@ def discover_parquet_layers(folder: Path):
     return sorted(p.stem for p in folder.glob("*.parquet"))
 
 
+def _run_rule(topo, rule_name, rule):
+    method_name = rule.get("metodo")
+    if method_name:
+        if method_name not in RULE_METHODS:
+            raise ValueError(f"Método topológico no permitido: {method_name}")
+        getattr(topo, method_name)(rule_name)
+        return
+
+    expression = ast.parse(rule["funcion"], mode="eval").body
+    if (
+        not isinstance(expression, ast.Call)
+        or not isinstance(expression.func, ast.Attribute)
+        or not isinstance(expression.func.value, ast.Name)
+        or expression.func.value.id != "topo"
+        or expression.func.attr not in RULE_METHODS
+        or expression.keywords
+        or len(expression.args) != 1
+        or not isinstance(expression.args[0], ast.Constant)
+        or not isinstance(expression.args[0].value, str)
+    ):
+        raise ValueError(f"La definición de la regla {rule_name} no es válida.")
+    getattr(topo, expression.func.attr)(expression.args[0].value)
+
+
 def validate_layer(folder: Path, layer_name: str):
     if IMPORT_ERROR:
         raise RuntimeError(
             "Falta integrar engine/reglas.py y engine/topologias.py. "
             f"Detalle: {IMPORT_ERROR}"
         )
-    rules = topologicas.get(layer_name)
+    rules = load_rules().get(layer_name)
     if not rules:
         return {
             "layer": layer_name,
@@ -43,10 +70,7 @@ def validate_layer(folder: Path, layer_name: str):
     execution_errors = []
     for rule_name, rule in topo.reglas.items():
         try:
-            # Conserva compatibilidad con tu diccionario actual. Próximo refactor:
-            # almacenar el nombre del método en vez de una expresión ejecutable.
-            expression = rule["funcion"]
-            eval(expression, {"topo": topo})
+            _run_rule(topo, rule_name, rule)
         except Exception as exc:
             execution_errors.append({"rule": rule_name, "message": str(exc)})
 
