@@ -120,23 +120,13 @@
     <div class="hero">
       <p class="eyebrow">CONFIGURACIÓN DEL MOTOR</p>
       <h1>Configurar <span>Reglas</span></h1>
-      <p class="lead">Consulta las reglas actuales y agrega capas con los métodos topológicos disponibles.</p>
+      <p class="lead">Consulta las reglas actuales y administra la configuración de cada capa existente.</p>
     </div>
     <div class="rules-current">
       <h2>Reglas actuales</h2>
       <div id="configuredRules" class="configured-rules" aria-live="polite"></div>
     </div>
-    <form id="addLayerRulesForm">
-      <h2>Agregar capa</h2>
-      <label class="tool-field" for="ruleLayerName">Nombre de la capa
-        <input id="ruleLayerName" name="layer" type="text" placeholder="Ej. corriente_ag_l" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,99}" required>
-      </label>
-      <p class="tool-hint">Usa el nombre del archivo GeoParquet sin la extensión .parquet. Los métodos Fuera_De, Sobreponerse_Con y Extremos_No_Conectan requieren una capa relacionada.</p>
-      <h3>Reglas para esta capa</h3>
-      <div id="availableRules" class="available-rules"></div>
-      <button id="saveLayerRules" class="primary" type="submit">Guardar capa y reglas</button>
-      <p id="rulesStatus" class="tool-status" role="status" aria-live="polite"></p>
-    </form>
+    <p id="rulesStatus" class="tool-status" role="status" aria-live="polite"></p>
   </section>
 </main>
 

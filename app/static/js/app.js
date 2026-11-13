@@ -269,62 +269,66 @@ connectToolForm(
 );
 
 const addLayerRulesForm = document.querySelector('#addLayerRulesForm');
-addLayerRulesForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    if (!addLayerRulesForm.reportValidity()) return;
+if (addLayerRulesForm) {
+    addLayerRulesForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!addLayerRulesForm.reportValidity()) return;
 
-    const selectedRules = [...document.querySelectorAll('.rule-option:checked')];
-    if (!selectedRules.length) {
-        setRulesStatus('Selecciona al menos una regla.', true);
-        return;
-    }
-
-    const rules = selectedRules.map((checkbox) => {
-        const option = checkbox.closest('.available-rule');
-        return {
-            method: checkbox.value,
-            name: option.querySelector('[data-rule-name]').value.trim(),
-            layers: option.querySelector('[data-rule-layers]').value
-                .split(',')
-                .map((layer) => layer.trim())
-                .filter(Boolean),
-            tolerance: option.querySelector('[data-rule-tolerance]').value,
-            exceptions: option.querySelector('[data-rule-exceptions]').value.trim(),
-        };
-    });
-
-    const button = document.querySelector('#saveLayerRules');
-    button.disabled = true;
-    setRulesStatus('Guardando configuración…');
-    try {
-        const response = await fetch('/api/rules', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                layer: document.querySelector('#ruleLayerName').value.trim(),
-                rules,
-            }),
-        });
-        const payload = await response.json();
-        if (!response.ok || !payload.ok) {
-            throw new Error(payload.message || 'No se pudo guardar la configuración.');
+        const selectedRules = [...document.querySelectorAll('.rule-option:checked')];
+        if (!selectedRules.length) {
+            setRulesStatus('Selecciona al menos una regla.', true);
+            return;
         }
 
-        addLayerRulesForm.reset();
-        await loadRuleConfiguration();
-        setRulesStatus(`Se guardaron las reglas de ${payload.layer}.`);
-    } catch (error) {
-        setRulesStatus(error.message || 'No se pudo guardar la configuración.', true);
-    } finally {
-        button.disabled = false;
-    }
-});
+        const rules = selectedRules.map((checkbox) => {
+            const option = checkbox.closest('.available-rule');
+            return {
+                method: checkbox.value,
+                name: option.querySelector('[data-rule-name]').value.trim(),
+                layers: option.querySelector('[data-rule-layers]').value
+                    .split(',')
+                    .map((layer) => layer.trim())
+                    .filter(Boolean),
+                tolerance: option.querySelector('[data-rule-tolerance]').value,
+                exceptions: option.querySelector('[data-rule-exceptions]').value.trim(),
+            };
+        });
+
+        const button = document.querySelector('#saveLayerRules');
+        button.disabled = true;
+        setRulesStatus('Guardando configuración…');
+        try {
+            const response = await fetch('/api/rules', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    layer: document.querySelector('#ruleLayerName').value.trim(),
+                    rules,
+                }),
+            });
+            const payload = await response.json();
+            if (!response.ok || !payload.ok) {
+                throw new Error(payload.message || 'No se pudo guardar la configuración.');
+            }
+
+            addLayerRulesForm.reset();
+            await loadRuleConfiguration();
+            setRulesStatus(`Se guardaron las reglas de ${payload.layer}.`);
+        } catch (error) {
+            setRulesStatus(error.message || 'No se pudo guardar la configuración.', true);
+        } finally {
+            button.disabled = false;
+        }
+    });
+}
 
 async function loadRuleConfiguration() {
     const configuredRules = document.querySelector('#configuredRules');
     const availableRules = document.querySelector('#availableRules');
     configuredRules.textContent = 'Cargando reglas…';
-    availableRules.replaceChildren();
+    if (availableRules) {
+        availableRules.replaceChildren();
+    }
 
     try {
         const response = await fetch('/api/rules');
@@ -334,7 +338,9 @@ async function loadRuleConfiguration() {
         }
 
         renderConfiguredRules(payload.layers);
-        renderAvailableRules(payload.methods);
+        if (availableRules) {
+            renderAvailableRules(payload.methods);
+        }
     } catch (error) {
         configuredRules.textContent = error.message || 'No se pudieron cargar las reglas.';
     }
@@ -414,6 +420,7 @@ async function removeConfiguredRule(layerName, ruleName) {
 
 function renderAvailableRules(methods) {
     const container = document.querySelector('#availableRules');
+    if (!container) return;
     container.replaceChildren();
     methods.forEach(({method, name}) => {
         const card = document.createElement('div');

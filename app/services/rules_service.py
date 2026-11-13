@@ -67,77 +67,7 @@ def save_rules(rules):
 
 
 def add_layer_rules(payload):
-    if not isinstance(payload, dict):
-        raise ValueError("La solicitud de configuración no es válida.")
-
-    layer_name = payload.get("layer", "")
-    if not isinstance(layer_name, str) or not NAME_PATTERN.fullmatch(layer_name):
-        raise ValueError("El nombre de la capa solo puede contener letras, números, guiones y guiones bajos.")
-
-    rules_input = payload.get("rules")
-    if not isinstance(rules_input, list) or not rules_input:
-        raise ValueError("Selecciona al menos una regla para la capa.")
-
-    rules = load_rules()
-    if any(existing.casefold() == layer_name.casefold() for existing in rules):
-        raise ValueError(f"La capa {layer_name} ya tiene reglas configuradas.")
-
-    layer_rules = {}
-    selected_methods = set()
-    for item in rules_input:
-        if not isinstance(item, dict):
-            raise ValueError("La configuración de una regla no es válida.")
-        method = item.get("method")
-        if not isinstance(method, str) or method not in RULE_METHODS:
-            raise ValueError("Se seleccionó un método topológico no disponible.")
-        if method in selected_methods:
-            raise ValueError(f"El método {method} está repetido.")
-        selected_methods.add(method)
-
-        name = item.get("name", RULE_METHODS[method])
-        if not isinstance(name, str) or not NAME_PATTERN.fullmatch(name):
-            raise ValueError("El nombre de cada regla solo puede contener letras, números, guiones y guiones bajos.")
-        if name in layer_rules:
-            raise ValueError(f"La regla {name} está repetida.")
-
-        rule = {
-            "funcion": f"topo.{method}('{name}')",
-            "metodo": method,
-        }
-        related_layers = item.get("layers", [])
-        if not isinstance(related_layers, list):
-            raise ValueError(f"Las capas relacionadas de {name} no son válidas.")
-        normalized_layers = []
-        for related_layer in related_layers:
-            if not isinstance(related_layer, str) or not NAME_PATTERN.fullmatch(related_layer):
-                raise ValueError(f"El nombre de una capa relacionada en {name} no es válido.")
-            if related_layer not in normalized_layers:
-                normalized_layers.append(related_layer)
-        if method in METHODS_REQUIRING_LAYERS and not normalized_layers:
-            raise ValueError(f"El método {method} requiere al menos una capa relacionada.")
-        if normalized_layers:
-            rule["capas"] = normalized_layers
-
-        tolerance = item.get("tolerance")
-        if tolerance not in (None, ""):
-            try:
-                tolerance = float(tolerance)
-            except (TypeError, ValueError) as exc:
-                raise ValueError(f"La tolerancia de {name} debe ser numérica.") from exc
-            if not math.isfinite(tolerance) or tolerance < 0:
-                raise ValueError(f"La tolerancia de {name} debe ser finita y no negativa.")
-            rule["tolerancia"] = tolerance
-
-        exceptions = item.get("exceptions", "")
-        if not isinstance(exceptions, str):
-            raise ValueError(f"Las excepciones de {name} no son válidas.")
-        if exceptions.strip():
-            rule["excepciones"] = exceptions.strip()[:500]
-        layer_rules[name] = rule
-
-    rules[layer_name] = layer_rules
-    save_rules(rules)
-    return layer_name, layer_rules
+    raise ValueError("La opción para agregar capas fue eliminada.")
 
 
 def delete_rule(layer_name, rule_name):

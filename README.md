@@ -22,7 +22,7 @@ La web acepta uno o varios `.parquet`. El nombre base del fichero se usa como no
 
 ## Configuración de reglas
 
-La sección **Configurar Reglas** muestra las reglas base de `engine/reglas.py` en paneles desplegables y permite agregar capas con uno o más métodos topológicos disponibles. Cada regla puede incluir capas relacionadas, tolerancia y excepciones. Las reglas se pueden eliminar individualmente; al quitar la última también se retira la capa configurada. Los nombres de capa deben coincidir con el nombre del archivo GeoParquet sin extensión; los cambios se guardan en `instance/reglas.json` y se cargan en las siguientes validaciones.
+La sección **Configurar Reglas** muestra las reglas base de `engine/reglas.py` en paneles desplegables y permite consultar y eliminar reglas de cada capa configurada. La adición de nuevas capas ya no está disponible en la interfaz; los nombres de capa deben coincidir con el nombre del archivo GeoParquet sin extensión y los cambios se guardan en `instance/reglas.json` y se cargan en las siguientes validaciones.
 
 ## Ejecución del motor
 

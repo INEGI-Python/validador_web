@@ -9,7 +9,7 @@ def create_app():
         MAX_CONTENT_LENGTH=14 * 1024 * 1024 * 1024,
         UPLOAD_FOLDER=str(Path(app.instance_path) / "uploads"),
         RESULTS_FOLDER=str(Path(app.instance_path) / "results"),
-        RULES_FILE=str(Path(app.instance_path) / "reglas.json"),
+        RULES_FILE=str(Path(app.instance_path) / "reglasTopologicas.json"),
     )
     Path(app.config["UPLOAD_FOLDER"]).mkdir(parents=True, exist_ok=True)
     Path(app.config["RESULTS_FOLDER"]).mkdir(parents=True, exist_ok=True)
