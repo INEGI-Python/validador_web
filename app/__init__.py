@@ -6,7 +6,7 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY="dev-change-me",
-        MAX_CONTENT_LENGTH=12 * 1024 * 1024 * 1024,
+        MAX_CONTENT_LENGTH=14 * 1024 * 1024 * 1024,
         UPLOAD_FOLDER=str(Path(app.instance_path) / "uploads"),
         RESULTS_FOLDER=str(Path(app.instance_path) / "results"),
         RULES_FILE=str(Path(app.instance_path) / "reglas.json"),

@@ -74,11 +74,18 @@
     <p class="lead">Convierte una capa GeoJSON, GeoPackage o Shapefile a GeoParquet conservando su CRS.</p>
     <form id="convertFormatForm">
       <div class="tool-fields">
-        <label class="tool-field" for="formatFile">Capa de origen
+        <label class="tool-field file-dropzone" for="formatFile">Capa de origen
           <input id="formatFile" name="files" type="file" accept=".geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" multiple required>
+          <small>Arrastra aquí los archivos o pulsa para seleccionarlos.</small>
+          <small class="file-selection" aria-live="polite"></small>
         </label>
       </div>
-      <p class="tool-hint">Para Shapefile, selecciona juntos los archivos .shp, .shx y .dbf. Si el GeoPackage contiene varias capas se convertirá la primera.</p>
+      <fieldset id="formatGpkgLayers" class="gpkg-layer-picker" hidden>
+        <legend>Capas del GeoPackage</legend>
+        <p class="tool-hint">Selecciona una o varias capas para convertir.</p>
+        <div class="gpkg-layer-options"></div>
+      </fieldset>
+      <p class="tool-hint">Para Shapefile, selecciona juntos los archivos .shp, .shx y .dbf.</p>
       <button class="primary" type="submit">Convertir a GeoParquet</button>
       <p id="convertStatus" class="tool-status" role="status" aria-live="polite"></p>
     </form>
@@ -89,13 +96,20 @@
     <p class="lead">Selecciona una capa con CRS definido y especifica el código EPSG de destino. El resultado conservará el formato de origen.</p>
     <form id="reprojectLayerForm">
       <div class="tool-fields">
-        <label class="tool-field" for="reprojectFile">Capa de origen
+        <label class="tool-field file-dropzone" for="reprojectFile">Capa de origen
           <input id="reprojectFile" name="files" type="file" accept=".parquet,.geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" multiple required>
+          <small>Arrastra aquí los archivos o pulsa para seleccionarlos.</small>
+          <small class="file-selection" aria-live="polite"></small>
         </label>
         <label class="tool-field" for="targetCrs">Sistema de referencia de destino (EPSG)
           <input id="targetCrs" name="targetCrs" type="text" placeholder="Ej. EPSG:4326" pattern="(EPSG:)?[0-9]+" required>
         </label>
       </div>
+      <fieldset id="reprojectGpkgLayers" class="gpkg-layer-picker" hidden>
+        <legend>Capas del GeoPackage</legend>
+        <p class="tool-hint">Selecciona una o varias capas para reproyectar.</p>
+        <div class="gpkg-layer-options"></div>
+      </fieldset>
       <p class="tool-hint">Para Shapefile, selecciona juntos los archivos .shp, .shx y .dbf. El resultado se descargará como un archivo ZIP.</p>
       <button class="primary" type="submit">Reproyectar capa</button>
       <p id="reprojectStatus" class="tool-status" role="status" aria-live="polite"></p>

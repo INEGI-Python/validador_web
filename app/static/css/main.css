@@ -180,6 +180,59 @@ h1 span {
 	color: var(--red);
 }
 
+.file-dropzone {
+	border: 1.5px dashed #9bb9ae;
+	border-radius: 12px;
+	padding: 14px;
+	background: #f8fbfa;
+	cursor: pointer;
+	transition: .2s;
+}
+
+.file-dropzone.drag,
+.file-dropzone:hover {
+	border-color: var(--green);
+	background: #eef7f3;
+}
+
+.file-dropzone small {
+	color: var(--muted);
+}
+
+.gpkg-layer-picker {
+	display: grid;
+	gap: 10px;
+	margin: 20px 0;
+	padding: 16px;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+}
+
+.gpkg-layer-picker[hidden] {
+	display: none;
+}
+
+.gpkg-layer-picker legend {
+	padding: 0 6px;
+	font-weight: 700;
+}
+
+.gpkg-layer-picker .tool-hint {
+	margin: 0;
+}
+
+.gpkg-layer-options {
+	display: grid;
+	gap: 8px;
+}
+
+.gpkg-layer-option {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	overflow-wrap: anywhere;
+}
+
 .rules-current {
 	margin-bottom: 32px;
 }
@@ -417,5 +470,10 @@ h1 span {
 
 	.dropzone {
 		min-height: 220px;
+	}
+	section.tool-section {
+		margin-top: 24px;
+		display: grid;
+		gap: 12px;
 	}
 }

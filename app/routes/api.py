@@ -8,7 +8,10 @@ from flask import Blueprint, Response, current_app, jsonify, request
 from werkzeug.utils import secure_filename
 from app.services.geospatial import (
     SHAPEFILE_COMPONENTS,
+    convert_geopackage_layers,
     convert_to_geoparquet,
+    list_geopackage_layers,
+    reproject_geopackage_layers,
     reproject_layer,
 )
 from app.services.validation_service import prepare_and_validate
@@ -110,7 +113,7 @@ def _tool_download(operation, allowed_formats):
         source = _save_source_files(
             request.files.getlist("files"), directory, allowed_formats
         )
-        output = operation(source, directory)
+        output = operation(source, directory, request.form.getlist("selectedLayers"))
         mimetype = mimetypes.guess_type(output.name)[0] or "application/octet-stream"
 
         def stream_output():
@@ -198,19 +201,51 @@ def remove_layer_rule(layer_name, rule_name):
 @api_bp.post("/convert")
 def convert():
     formats = {".geojson", ".json", ".gpkg", ".shp"}
+
+    def operation(source, directory, selected_layers):
+        if source.suffix.lower() == ".gpkg":
+            return convert_geopackage_layers(source, selected_layers, directory)
+        return convert_to_geoparquet(source, directory / f"{source.stem}.parquet")
+
     return _tool_download(
-        lambda source, directory: convert_to_geoparquet(
-            source, directory / f"{source.stem}.parquet"
-        ),
+        operation,
         formats,
     )
+
+
+@api_bp.post("/gpkg-layers")
+def geopackage_layers():
+    upload = request.files.get("file")
+    if not upload or Path(upload.filename or "").suffix.lower() != ".gpkg":
+        return jsonify(ok=False, message="Selecciona un archivo GeoPackage válido."), 400
+
+    try:
+        with tempfile.TemporaryDirectory(
+            prefix="capas-gpkg-", dir=current_app.config["RESULTS_FOLDER"]
+        ) as temporary_dir:
+            source = _save_source_files([upload], Path(temporary_dir), {".gpkg"})
+            layers = list_geopackage_layers(source)
+        return jsonify(ok=True, layers=layers)
+    except ValueError as exc:
+        return jsonify(ok=False, message=str(exc)), 400
+    except Exception:
+        current_app.logger.exception("No se pudieron consultar las capas del GeoPackage.")
+        return jsonify(ok=False, message="Ocurrió un error al consultar el GeoPackage."), 500
 
 
 @api_bp.post("/reproject")
 def reproject():
     target_crs = request.form.get("targetCrs", "")
+
+    def operation(source, directory, selected_layers):
+        if source.suffix.lower() == ".gpkg":
+            return reproject_geopackage_layers(
+                source, target_crs, selected_layers, directory
+            )
+        return reproject_layer(source, target_crs, directory)
+
     return _tool_download(
-        lambda source, directory: reproject_layer(source, target_crs, directory),
+        operation,
         {".geojson", ".json", ".gpkg", ".parquet", ".shp"},
     )
 

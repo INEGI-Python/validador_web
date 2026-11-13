@@ -6,6 +6,97 @@ const form = document.querySelector('#uploadForm');
 const statusBox = document.querySelector('#status');
 const results = document.querySelector('#results');
 
+document.querySelectorAll('#formatFile, #reprojectFile').forEach((fileInput) => {
+    const dropzone = fileInput.closest('.file-dropzone');
+    const selection = dropzone.querySelector('.file-selection');
+    const form = fileInput.closest('form');
+    const status = form.querySelector('.tool-status');
+    const picker = form.querySelector('.gpkg-layer-picker');
+    const options = picker.querySelector('.gpkg-layer-options');
+    let layerRequest = 0;
+    let dragDepth = 0;
+
+    async function updateGpkgLayerOptions() {
+        const requestId = ++layerRequest;
+        const file = [...fileInput.files].find((item) => item.name.toLowerCase().endsWith('.gpkg'));
+        const button = form.querySelector('button[type="submit"]');
+        options.replaceChildren();
+        picker.hidden = !file;
+
+        if (!file) {
+            button.disabled = false;
+            status.textContent = '';
+            status.classList.remove('error');
+            return;
+        }
+
+        button.disabled = true;
+        status.classList.remove('error');
+        status.textContent = 'Consultando las capas del GeoPackage…';
+
+        try {
+            const data = new FormData();
+            data.append('file', file);
+            const response = await fetch('/api/gpkg-layers', { method: 'POST', body: data });
+            const payload = await response.json();
+            if (!response.ok || !payload.ok) {
+                throw new Error(payload.message || 'No se pudieron consultar las capas.');
+            }
+            if (requestId !== layerRequest) return;
+
+            payload.layers.forEach((layerName) => {
+                const label = document.createElement('label');
+                label.className = 'gpkg-layer-option';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'selectedLayers';
+                checkbox.value = layerName;
+                const name = document.createElement('span');
+                name.textContent = layerName;
+                label.append(checkbox, name);
+                options.append(label);
+            });
+            status.textContent = payload.layers.length
+                ? 'Marca las capas que deseas procesar.'
+                : 'El GeoPackage no contiene capas.';
+        } catch (error) {
+            if (requestId !== layerRequest) return;
+            status.classList.add('error');
+            status.textContent = error.message || 'No se pudieron consultar las capas.';
+            picker.hidden = true;
+        } finally {
+            if (requestId === layerRequest) button.disabled = false;
+        }
+    }
+
+    fileInput.addEventListener('change', () => {
+        selection.textContent = [...fileInput.files].map((file) => file.name).join(', ');
+        updateGpkgLayerOptions();
+    });
+
+    dropzone.addEventListener('dragenter', (event) => {
+        event.preventDefault();
+        dragDepth += 1;
+        dropzone.classList.add('drag');
+    });
+
+    dropzone.addEventListener('dragover', (event) => event.preventDefault());
+
+    dropzone.addEventListener('dragleave', (event) => {
+        event.preventDefault();
+        dragDepth = Math.max(0, dragDepth - 1);
+        if (!dragDepth) dropzone.classList.remove('drag');
+    });
+
+    dropzone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dragDepth = 0;
+        dropzone.classList.remove('drag');
+        fileInput.files = event.dataTransfer.files;
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+});
+
 $(document).ready(function() {
     $.get("/api/client-user", function(data) {
     $("#userBadge").text(`INEGI · ${data.username || 'Usuario'}`);
@@ -100,9 +191,24 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
     const toolForm = document.querySelector(`#${formId}`);
     const toolStatus = document.querySelector(`#${statusId}`);
     const toolButton = toolForm.querySelector('button[type="submit"]');
+    const fileInput = toolForm.querySelector('input[type="file"]');
+    const layerPicker = toolForm.querySelector('.gpkg-layer-picker');
 
     toolForm.addEventListener('submit', async (event) => {
         event.preventDefault();
+        const hasGeopackage = [...fileInput.files].some((file) =>
+            file.name.toLowerCase().endsWith('.gpkg'),
+        );
+        if (hasGeopackage && !layerPicker.querySelector('input:checked')) {
+            toolStatus.classList.add('error');
+            const options = layerPicker.querySelector('.gpkg-layer-options');
+            if (options.childElementCount) {
+                toolStatus.textContent = 'Selecciona al menos una capa del GeoPackage.';
+            } else if (!toolStatus.textContent) {
+                toolStatus.textContent = 'No se pudieron cargar las capas del GeoPackage. Selecciona de nuevo el archivo.';
+            }
+            return;
+        }
         if (!toolForm.reportValidity()) return;
 
         toolButton.disabled = true;
