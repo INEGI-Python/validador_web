@@ -166,6 +166,24 @@ h1 span {
 	cursor: not-allowed;
 }
 
+.local-file-actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 8px;
+	margin-top: 14px;
+}
+
+.secondary {
+	border: 1px solid var(--green);
+	border-radius: 10px;
+	background: #fff;
+	color: var(--green);
+	padding: 10px 14px;
+	font-weight: 800;
+	cursor: pointer;
+}
+
 .tool-hint,
 .tool-status {
 	color: var(--muted);
@@ -392,6 +410,7 @@ h1 span {
     text-align: center;
     font-size: 15px;
     padding: 10px;
+	width: 100%;
 }
 .descargar a{
     text-decoration: none;

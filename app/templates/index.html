@@ -54,13 +54,18 @@
     </div>
 
     <form id="uploadForm">
-      <label id="dropzone" class="dropzone" for="fileInput">
+      <div id="dropzone" class="dropzone">
         <div class="icon">⇧</div>
         <strong>Arrastra aquí tus capas GeoParquet</strong>
         <span>o pulsa para seleccionar archivos</span>
-        <small>Primera integración: archivos .parquet</small>
-      </label>
+        <small>Selecciona archivos o una carpeta local completa</small>
+        <div class="local-file-actions">
+          <button id="selectFilesButton" class="secondary" type="button">Seleccionar archivos</button>
+          <button id="selectFolderButton" class="secondary" type="button">Seleccionar carpeta</button>
+        </div>
+      </div>
       <input id="fileInput" type="file" name="layers" accept=".parquet" multiple hidden>
+      <input id="folderInput" type="file" accept=".parquet" webkitdirectory directory multiple hidden>
       <div id="fileList" class="file-list"></div>
       <button id="validateBtn" class="primary" type="submit" disabled>Iniciar validación</button>
     </form>
@@ -74,11 +79,16 @@
     <p class="lead">Convierte una capa GeoJSON, GeoPackage o Shapefile a GeoParquet conservando su CRS.</p>
     <form id="convertFormatForm">
       <div class="tool-fields">
-        <label class="tool-field file-dropzone" for="formatFile">Capa de origen
-          <input id="formatFile" name="files" type="file" accept=".geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" multiple required>
-          <small>Arrastra aquí los archivos o pulsa para seleccionarlos.</small>
+        <div class="tool-field file-dropzone">Capa de origen
+          <input id="formatFile" name="files" type="file" accept=".geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" multiple required hidden>
+          <input id="formatFolder" type="file" accept=".geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" webkitdirectory directory multiple hidden>
+          <small>Arrastra aquí los archivos o selecciona una ubicación local.</small>
+          <div class="local-file-actions">
+            <button class="secondary tool-select-files" type="button" data-file-input="formatFile">Seleccionar archivos</button>
+            <button class="secondary tool-select-folder" type="button" data-folder-input="formatFolder">Seleccionar carpeta</button>
+          </div>
           <small class="file-selection" aria-live="polite"></small>
-        </label>
+        </div>
       </div>
       <fieldset id="formatGpkgLayers" class="gpkg-layer-picker" hidden>
         <legend>Capas del GeoPackage</legend>
@@ -96,11 +106,16 @@
     <p class="lead">Selecciona una capa con CRS definido y especifica el código EPSG de destino. El resultado conservará el formato de origen.</p>
     <form id="reprojectLayerForm">
       <div class="tool-fields">
-        <label class="tool-field file-dropzone" for="reprojectFile">Capa de origen
-          <input id="reprojectFile" name="files" type="file" accept=".parquet,.geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" multiple required>
-          <small>Arrastra aquí los archivos o pulsa para seleccionarlos.</small>
+        <div class="tool-field file-dropzone">Capa de origen
+          <input id="reprojectFile" name="files" type="file" accept=".parquet,.geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" multiple required hidden>
+          <input id="reprojectFolder" type="file" accept=".parquet,.geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" webkitdirectory directory multiple hidden>
+          <small>Arrastra aquí los archivos o selecciona una ubicación local.</small>
+          <div class="local-file-actions">
+            <button class="secondary tool-select-files" type="button" data-file-input="reprojectFile">Seleccionar archivos</button>
+            <button class="secondary tool-select-folder" type="button" data-folder-input="reprojectFolder">Seleccionar carpeta</button>
+          </div>
           <small class="file-selection" aria-live="polite"></small>
-        </label>
+        </div>
         <label class="tool-field" for="targetCrs">Sistema de referencia de destino (EPSG)
           <input id="targetCrs" name="targetCrs" type="text" placeholder="Ej. EPSG:4326" pattern="(EPSG:)?[0-9]+" required>
         </label>

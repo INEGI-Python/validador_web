@@ -1,4 +1,7 @@
 const input=document.querySelector('#fileInput')
+const folderInput=document.querySelector('#folderInput')
+const selectFilesButton=document.querySelector('#selectFilesButton')
+const selectFolderButton=document.querySelector('#selectFolderButton')
 const zone = document.querySelector('#dropzone');
 const list = document.querySelector('#fileList');
 const btn = document.querySelector('#validateBtn');
@@ -10,15 +13,25 @@ document.querySelectorAll('#formatFile, #reprojectFile').forEach((fileInput) => 
     const dropzone = fileInput.closest('.file-dropzone');
     const selection = dropzone.querySelector('.file-selection');
     const form = fileInput.closest('form');
+    const selectFilesButton = dropzone.querySelector('.tool-select-files');
+    const selectFolderButton = dropzone.querySelector('.tool-select-folder');
+    const folderInput = document.querySelector(
+        `#${selectFolderButton.dataset.folderInput}`,
+    );
     const status = form.querySelector('.tool-status');
     const picker = form.querySelector('.gpkg-layer-picker');
     const options = picker.querySelector('.gpkg-layer-options');
     let layerRequest = 0;
     let dragDepth = 0;
+    let ruta = '';
 
     async function updateGpkgLayerOptions() {
         const requestId = ++layerRequest;
         const file = [...fileInput.files].find((item) => item.name.toLowerCase().endsWith('.gpkg'));
+        ruta = file ? "D:\\DESARROLLO\\Python\\datos\\" + file.name : '';
+        selection.textContent = ruta;
+
+
         const button = form.querySelector('button[type="submit"]');
         options.replaceChildren();
         picker.hidden = !file;
@@ -35,9 +48,7 @@ document.querySelectorAll('#formatFile, #reprojectFile').forEach((fileInput) => 
         status.textContent = 'Consultando las capas del GeoPackage…';
 
         try {
-            const data = new FormData();
-            data.append('file', file);
-            const response = await fetch('/api/gpkg-layers', { method: 'POST', body: data });
+            const response = await fetch(`/api/gpkg_layers/${encodeURIComponent(ruta)}`, { method: 'GET' });
             const payload = await response.json();
             if (!response.ok || !payload.ok) {
                 throw new Error(payload.message || 'No se pudieron consultar las capas.');
@@ -72,6 +83,23 @@ document.querySelectorAll('#formatFile, #reprojectFile').forEach((fileInput) => 
     fileInput.addEventListener('change', () => {
         selection.textContent = [...fileInput.files].map((file) => file.name).join(', ');
         updateGpkgLayerOptions();
+    });
+
+    selectFilesButton.addEventListener('click', () => fileInput.click());
+    selectFolderButton.addEventListener('click', () => folderInput.click());
+
+    folderInput.addEventListener('change', () => {
+        const transfer = new DataTransfer();
+        [...folderInput.files].forEach((file) => {
+            if (/\.(geojson|json|gpkg|shp|shx|dbf|prj|cpg|parquet)$/i.test(file.name)) {
+                transfer.items.add(file);
+            }
+        });
+        fileInput.files = transfer.files;
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+        selection.textContent = [...fileInput.files]
+            .map((file) => file.webkitRelativePath || file.name)
+            .join(', ');
     });
 
     dropzone.addEventListener('dragenter', (event) => {
@@ -128,18 +156,25 @@ function setFiles(files) {
     selected = [...files].filter((file) =>
         file.name.toLowerCase().endsWith('.parquet'),
     );
-    list.innerHTML = selected
-        .map(
-            (file) =>
-                `<div class="file"><strong>${file.name}</strong><span>${(
-                    file.size / 1048576
-                ).toFixed(1)} MB</span></div>`,
-        )
-        .join('');
+    list.replaceChildren();
+    selected.forEach((file) => {
+        const item = document.createElement('div');
+        item.className = 'file';
+        const name = document.createElement('strong');
+        name.textContent = file.webkitRelativePath || file.name;
+        const size = document.createElement('span');
+        size.textContent = `${(file.size / 1048576).toFixed(1)} MB`;
+        item.append(name, size);
+        list.append(item);
+    });
     btn.disabled = !selected.length;
 }
 
 input.addEventListener('change', (event) => setFiles(event.target.files));
+folderInput.addEventListener('change', (event) => setFiles(event.target.files));
+
+selectFilesButton.addEventListener('click', () => input.click());
+selectFolderButton.addEventListener('click', () => folderInput.click());
 
 ['dragenter', 'dragover'].forEach((eventName) =>
     zone.addEventListener(eventName, (event) => {
@@ -196,13 +231,11 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
 
     toolForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const hasGeopackage = [...fileInput.files].some((file) =>
-            file.name.toLowerCase().endsWith('.gpkg'),
-        );
-        if (hasGeopackage && !layerPicker.querySelector('input:checked')) {
+        const seleccionados = [ ...layerPicker.querySelectorAll('input:checked') ];
+        if (!seleccionados.length) {
             toolStatus.classList.add('error');
             const options = layerPicker.querySelector('.gpkg-layer-options');
-            if (options.childElementCount) {
+            if (!options.childElementCount) {
                 toolStatus.textContent = 'Selecciona al menos una capa del GeoPackage.';
             } else if (!toolStatus.textContent) {
                 toolStatus.textContent = 'No se pudieron cargar las capas del GeoPackage. Selecciona de nuevo el archivo.';
@@ -211,6 +244,13 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
         }
         if (!toolForm.reportValidity()) return;
 
+      
+        
+        let $capas = []
+        for (const checkbox of seleccionados) {
+            $capas.push(checkbox.value)
+        }
+
         toolButton.disabled = true;
         toolStatus.classList.remove('error');
         toolStatus.textContent = progressMessage;
@@ -218,32 +258,30 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
         try {
             const response = await fetch(endpoint, {
                 method: 'POST',
-                body: new FormData(toolForm),
-            });
-            if (!response.ok) {
-                let message = `No se completó la operación (HTTP ${response.status}).`;
-                try {
-                    const payload = await response.json();
-                    if (payload.message) message = payload.message;
-                } catch {
-                    // The server may return a non-JSON error page.
+                body: JSON.stringify({gpkg: $(".file-selection").text(), layers: $capas }),
+                headers: {
+                    'Content-Type': 'application/json'
                 }
-                throw new Error(message);
-            }
+            }).then((response) => response.json()).then((data) => {
+                if (!data.ok) {
+                    throw new Error(data.message || 'No se pudo procesar la capa.');
+                }
+                toolStatus.innerHTML = successMessage+"<br>"+`<div class="descargar"><a href="${data.result}">⇩</a></div>`;
 
-            const file = await response.blob();
-            const disposition = response.headers.get('Content-Disposition') || '';
-            const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
-            const filename = filenameMatch ? filenameMatch[1] : 'capa-procesada';
-            const url = URL.createObjectURL(file);
-            const downloadLink = document.createElement('a');
-            downloadLink.href = url;
-            downloadLink.download = filename;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            downloadLink.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
-            toolStatus.textContent = successMessage;
+            });
+            
+            // const file = await response.blob();
+            // const disposition = response.headers.get('Content-Disposition') || '';
+            // const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+            // const filename = filenameMatch ? filenameMatch[1] : 'capa-procesada';
+            // const url = URL.createObjectURL(file);
+            // const downloadLink = document.createElement('a');
+            // downloadLink.href = url;
+            // downloadLink.download = filename;
+            // document.body.appendChild(downloadLink);
+            // downloadLink.click();
+            // downloadLink.remove();
+            // setTimeout(() => URL.revokeObjectURL(url), 1000);
         } catch (error) {
             toolStatus.classList.add('error');
             toolStatus.textContent = error.message || 'No se pudo procesar la capa.';
@@ -258,7 +296,7 @@ connectToolForm(
     'convertStatus',
     '/api/convert',
     'Convirtiendo capa…',
-    'Conversión terminada. La descarga ha comenzado.',
+    'Conversión terminada. De clic en el icono de descarga.',
 );
 connectToolForm(
     'reprojectLayerForm',

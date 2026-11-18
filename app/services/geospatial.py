@@ -84,8 +84,8 @@ def convert_geopackage_layers(
         output_path = output_dir / f"{index}_{safe_name}.parquet"
         outputs.append(convert_to_geoparquet(source_path, output_path, layer_name))
 
-    output_path = output_dir / f"{source_path.stem}_capas.zip"
-    with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as archive:
+    output_path = f"{output_dir}/{source_path.stem}_capas.zip"
+    with zipfile.ZipFile(Path(output_path), "w", zipfile.ZIP_DEFLATED) as archive:
         for layer_path in outputs:
             archive.write(layer_path, layer_path.name)
     return output_path

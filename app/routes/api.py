@@ -200,6 +200,7 @@ def remove_layer_rule(layer_name, rule_name):
 
 @api_bp.post("/convert")
 def convert():
+    import json 
     formats = {".geojson", ".json", ".gpkg", ".shp"}
 
     def operation(source, directory, selected_layers):
@@ -207,24 +208,16 @@ def convert():
             return convert_geopackage_layers(source, selected_layers, directory)
         return convert_to_geoparquet(source, directory / f"{source.stem}.parquet")
 
-    return _tool_download(
-        operation,
-        formats,
-    )
+    datos=json.loads(request.get_data())
+    source= Path(datos.get("gpkg", ""))
+    selected_layers=datos.get("layers", [])
 
+    return jsonify(ok=True, result=operation(source=source, directory=Path(tempfile.mkdtemp(prefix="capa-", dir=current_app.config["RESULTS_FOLDER"])), selected_layers=selected_layers))
 
-@api_bp.post("/gpkg-layers")
-def geopackage_layers():
-    upload = request.files.get("file")
-    if not upload or Path(upload.filename or "").suffix.lower() != ".gpkg":
-        return jsonify(ok=False, message="Selecciona un archivo GeoPackage válido."), 400
-
+@api_bp.get("/gpkg_layers/<filepath>")
+def gpkg_layers(filepath):
     try:
-        with tempfile.TemporaryDirectory(
-            prefix="capas-gpkg-", dir=current_app.config["RESULTS_FOLDER"]
-        ) as temporary_dir:
-            source = _save_source_files([upload], Path(temporary_dir), {".gpkg"})
-            layers = list_geopackage_layers(source)
+        layers = list_geopackage_layers(Path(filepath))
         return jsonify(ok=True, layers=layers)
     except ValueError as exc:
         return jsonify(ok=False, message=str(exc)), 400
