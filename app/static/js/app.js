@@ -11,7 +11,7 @@ const results = document.querySelector('#results');
 
 document.querySelectorAll('#convertFormatForm, #reprojectFile').forEach((fileInput) => {
     const dropzone = fileInput.closest('.file-dropzone');
-    const selection = dropzone.querySelector('.file-selection');
+    let $selection = $(".file-selection");
     const form = fileInput.closest('form');
     const status = form.querySelector('.tool-status');
     const picker = form.querySelector('.gpkg-layer-picker');
@@ -33,7 +33,7 @@ document.querySelectorAll('#convertFormatForm, #reprojectFile').forEach((fileInp
             return;
         }
         
-        selection.textContent = res.ruta;
+        $selection.html(res.ruta);
         $button.removeAttr("disabled")
         status.classList.remove('error');
         status.textContent = 'Consultando las capas del GeoPackage…';
@@ -87,8 +87,7 @@ document.querySelectorAll('#convertFormatForm, #reprojectFile').forEach((fileInp
 
 
 
-
-
+/*
     folderInput.addEventListener('change', () => {
 
         const transfer = new DataTransfer();
@@ -126,6 +125,9 @@ document.querySelectorAll('#convertFormatForm, #reprojectFile').forEach((fileInp
         fileInput.files = event.dataTransfer.files;
         fileInput.dispatchEvent(new Event('change', { bubbles: true }));
     });
+
+
+    */
 });
 
 $(document).ready(function() {
