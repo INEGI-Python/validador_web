@@ -4,6 +4,7 @@ from pathlib import Path
 import json 
 from flask import send_from_directory, current_app
 import os
+from tkinter import Tk, filedialog
 
 from flask import Blueprint, Response, current_app, jsonify, request
 from werkzeug.utils import secure_filename
@@ -263,3 +264,24 @@ def descargar(folder,file):
     if not os.path.exists(result_folder):
         return jsonify(ok=False, message="No se encontro la carpeta de trabajo"),404
     return send_from_directory(result_folder,file,as_attachment=True)
+
+
+@api_bp.get("/seleccionar_archivo")
+def seleccionar_archivo():
+    root = Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+
+    ruta = filedialog.askopenfilename(
+        title="Seleccione archivo geográfico",
+        filetypes=[("GeoPackage","*.gpkg"),("Shapefile","*.shp"),("GeoJSON","*.geojson")]
+    )
+    root.destroy()
+    if not ruta:
+        return jsonify({"ok":False,"message":"No se pudo seleccionar el archivo"})
+    return jsonify({"ok":True,"ruta":ruta})
+
+
+
+#  supervisor_cs@lvvdigital.com
+# 163663

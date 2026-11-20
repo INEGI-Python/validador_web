@@ -9,15 +9,10 @@ const form = document.querySelector('#uploadForm');
 const statusBox = document.querySelector('#status');
 const results = document.querySelector('#results');
 
-document.querySelectorAll('#formatFile, #reprojectFile').forEach((fileInput) => {
+document.querySelectorAll('#convertFormatForm, #reprojectFile').forEach((fileInput) => {
     const dropzone = fileInput.closest('.file-dropzone');
     const selection = dropzone.querySelector('.file-selection');
     const form = fileInput.closest('form');
-    const selectFilesButton = dropzone.querySelector('.tool-select-files');
-    const selectFolderButton = dropzone.querySelector('.tool-select-folder');
-    const folderInput = document.querySelector(
-        `#${selectFolderButton.dataset.folderInput}`,
-    );
     const status = form.querySelector('.tool-status');
     const picker = form.querySelector('.gpkg-layer-picker');
     const options = picker.querySelector('.gpkg-layer-options');
@@ -25,25 +20,21 @@ document.querySelectorAll('#formatFile, #reprojectFile').forEach((fileInput) => 
     let dragDepth = 0;
     
 
-    async function updateGpkgLayerOptions() {
+    async function updateGpkgLayerOptions(res) {
         const requestId = ++layerRequest;
-        const file = [...fileInput.files].find((item) => item.name.toLowerCase().endsWith('.gpkg'));
-        const ruta = file ? "E:\\Documents\\CODIGO_FUENTE\\INEGI\\Topografica2026\\recuperarCurvas\\datos\\" + file.name : '';
-        selection.textContent = ruta;
-
-
-        const button = form.querySelector('button[type="submit"]');
+        let $button = $("#btnConvierte")
         options.replaceChildren();
-        picker.hidden = !file;
-
-        if (!file) {
-            button.disabled = false;
+        picker.hidden = res.ok;
+        if (!res.ok) {
+            console.log(res.ok)
+            $button.attr("disabled");
             status.textContent = '';
             status.classList.remove('error');
             return;
         }
-
-        button.disabled = true;
+        
+        selection.textContent = res.ruta;
+        $button.removeAttr("disabled")
         status.classList.remove('error');
         status.textContent = 'Consultando las capas del GeoPackage…';
 
@@ -51,7 +42,7 @@ document.querySelectorAll('#formatFile, #reprojectFile').forEach((fileInput) => 
             await fetch("/api/gpkg_layers", 
                 {
                  method: 'POST', 
-                 body: JSON.stringify({ filepath: ruta }), 
+                 body: JSON.stringify({ filepath: res.ruta }), 
                 headers: { 'Content-Type': 'application/json' } 
                 }).then(response =>{ return response.json()}).then(payload=>{
                 
@@ -84,22 +75,25 @@ document.querySelectorAll('#formatFile, #reprojectFile').forEach((fileInput) => 
             status.textContent = error.message || 'No se pudieron consultar las capas.';
             picker.hidden = true;
         } finally {
-            if (requestId === layerRequest) button.disabled = false;
+            if (requestId === layerRequest) $button.attr("disabled",false);
         }
     }
 
-    fileInput.addEventListener('change', () => {
-        selection.textContent = [...fileInput.files].map((file) => file.name).join(', ');
-        updateGpkgLayerOptions();
-    });
+    $("#seleccionarArchivo").on("click",()=>{
+        $.get("api/seleccionar_archivo").done(res=>{
+            updateGpkgLayerOptions(res)
+        })
+    })
 
-    selectFilesButton.addEventListener('click', () => fileInput.click());
-    selectFolderButton.addEventListener('click', () => folderInput.click());
+
+
+
 
     folderInput.addEventListener('change', () => {
 
         const transfer = new DataTransfer();
         [...folderInput.files].forEach((file) => {
+            console.log(file)
             if (/\.(geojson|json|gpkg|shp|shx|dbf|prj|cpg|parquet)$/i.test(file.name)) {
                 transfer.items.add(file);
             }
@@ -117,16 +111,16 @@ document.querySelectorAll('#formatFile, #reprojectFile').forEach((fileInput) => 
         dropzone.classList.add('drag');
     });
 
-    dropzone.addEventListener('dragover', (event) => event.preventDefault());
+    dropzone.addEventListener('dragover', (event) => {event.preventDefault();  console.log(event)   });
 
     dropzone.addEventListener('dragleave', (event) => {
-        event.preventDefault();
+        event.preventDefault();  console.log(event);
         dragDepth = Math.max(0, dragDepth - 1);
         if (!dragDepth) dropzone.classList.remove('drag');
     });
 
     dropzone.addEventListener('drop', (event) => {
-        event.preventDefault();
+        event.preventDefault();  console.log(event) 
         dragDepth = 0;
         dropzone.classList.remove('drag');
         fileInput.files = event.dataTransfer.files;
@@ -156,7 +150,10 @@ $(document).ready(function() {
   });
   loadRuleConfiguration();
 
+  
 });
+
+
 
 
 
@@ -235,11 +232,10 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
     const toolForm = document.querySelector(`#${formId}`);
     const toolStatus = document.querySelector(`#${statusId}`);
     const toolButton = toolForm.querySelector('button[type="submit"]');
-    const fileInput = toolForm.querySelector('input[type="file"]');
     const layerPicker = toolForm.querySelector('.gpkg-layer-picker');
 
     toolForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
+        event.preventDefault(); console.log(event)
         const seleccionados = [ ...layerPicker.querySelectorAll('input:checked') ];
         if (!seleccionados.length) {
             toolStatus.classList.add('error');
@@ -318,6 +314,11 @@ connectToolForm(
     'Reproyectando capa…',
     'Reproyección terminada. La descarga ha comenzado.',
 );
+
+
+
+/*  ****************************  REGAS    ****************************************/
+
 
 const addLayerRulesForm = document.querySelector('#addLayerRulesForm');
 if (addLayerRulesForm) {

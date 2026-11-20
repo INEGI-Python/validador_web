@@ -80,12 +80,9 @@
     <form id="convertFormatForm">
       <div class="tool-fields">
         <div class="tool-field file-dropzone">Capa de origen
-          <input id="formatFile" name="files" type="file" accept=".geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" multiple required hidden>
-          <input id="formatFolder" type="file" accept=".geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" webkitdirectory directory multiple hidden>
           <small>Arrastra aquí los archivos o selecciona una ubicación local.</small>
           <div class="local-file-actions">
-            <button class="secondary tool-select-files" type="button" data-file-input="formatFile">Seleccionar archivos</button>
-            <button class="secondary tool-select-folder" type="button" data-folder-input="formatFolder">Seleccionar carpeta</button>
+            <button class="secondary" type="button" id="seleccionarArchivo">Seleccionar Archivo</button>
           </div>
           <small class="file-selection" aria-live="polite"></small>
         </div>
@@ -96,7 +93,7 @@
         <div class="gpkg-layer-options"></div>
       </fieldset>
       <p class="tool-hint">Para Shapefile, selecciona juntos los archivos .shp, .shx y .dbf.</p>
-      <button class="primary" type="submit">Convertir a GeoParquet</button>
+      <button class="primary" type="button" id="btnConvierte" disabled>Convertir a GeoParquet</button>
       <p id="convertStatus" class="tool-status" role="status" aria-live="polite"></p>
     </form>
   </section>
