@@ -6,3 +6,4 @@ instance/uploads/*
 instance/results/*
 !instance/uploads/.gitkeep
 !instance/results/.gitkeep
+debug.log
