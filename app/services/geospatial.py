@@ -57,8 +57,8 @@ def read_layer(source_path: Path, layer_name: str | None = None):
 
 
 def convert_to_geoparquet(
-    source_path: Path, output_path: Path, layer_name: str | None = None
-) -> Path:
+    source_path: Path, output_path: str, layer_name: str | None = None
+)-> str:
     if source_path.suffix.lower() == ".parquet":
         raise ValueError("La capa ya está en formato GeoParquet.")
 
@@ -70,25 +70,23 @@ def convert_to_geoparquet(
     return output_path
 
 
-def convert_geopackage_layers(
-    source_path: Path, selected_layers: list[str], output_dir: Path
-) -> Path:
+def convert_geopackage_layers(source_path, selected_layers, output_dir):
     layers = _selected_geopackage_layers(source_path, selected_layers)
     if len(layers) == 1:
-        output_path = output_dir / f"{source_path.stem}.parquet"
-        return convert_to_geoparquet(source_path, output_path, layers[0])
+        output_path = f"{output_dir}/{source_path.stem}.parquet"
+        return convert_to_geoparquet(Path(source_path), output_path, layers[0])
 
     outputs = []
     for index, layer_name in enumerate(layers, start=1):
         safe_name = secure_filename(layer_name) or "capa"
-        output_path = output_dir / f"{index}_{safe_name}.parquet"
-        outputs.append(convert_to_geoparquet(source_path, output_path, layer_name))
+        output_path = f"{output_dir}/{index}_{safe_name}.parquet"
+        outputs.append(convert_to_geoparquet(Path(source_path), output_path, layer_name))
 
-    output_path = f"{output_dir}/{source_path.stem}_capas.zip"
-    with zipfile.ZipFile(Path(output_path), "w", zipfile.ZIP_DEFLATED) as archive:
+    outzip_path = f"{output_dir}/{source_path.stem}_capas.zip"
+    with zipfile.ZipFile(Path(outzip_path), "w", zipfile.ZIP_DEFLATED) as archive:
         for layer_path in outputs:
-            archive.write(layer_path, layer_path.name)
-    return output_path
+            archive.write(layer_path, layer_path)
+    return outzip_path
 
 
 def reproject_layer(

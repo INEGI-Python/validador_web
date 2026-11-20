@@ -1,7 +1,8 @@
 import mimetypes
 import tempfile
 from pathlib import Path
-
+import json 
+from flask import send_from_directory, current_app
 import os
 
 from flask import Blueprint, Response, current_app, jsonify, request
@@ -38,6 +39,7 @@ def _get_windows_client_user():
         if value:
             return value
 
+def _get_environ_names():
     environ_names = ("USERNAME", "USER")
     for name in environ_names:
         value = os.environ.get(name)
@@ -49,7 +51,7 @@ def _get_windows_client_user():
 
 @api_bp.get("/client-user")
 def client_user():
-    username = _get_windows_client_user()
+    username = _get_environ_names()
     if not username:
         return jsonify(ok=False, message="No se pudo determinar el usuario de Windows del cliente."), 404
     return jsonify(ok=True, username=username)
@@ -200,23 +202,24 @@ def remove_layer_rule(layer_name, rule_name):
 
 @api_bp.post("/convert")
 def convert():
-    import json 
     formats = {".geojson", ".json", ".gpkg", ".shp"}
 
     def operation(source, directory, selected_layers):
         if source.suffix.lower() == ".gpkg":
             return convert_geopackage_layers(source, selected_layers, directory)
-        return convert_to_geoparquet(source, directory / f"{source.stem}.parquet")
+        return convert_to_geoparquet(Path(source), f"{directory}/{source.stem}.parquet")
 
     datos=json.loads(request.get_data())
     source= Path(datos.get("gpkg", ""))
     selected_layers=datos.get("layers", [])
 
-    return jsonify(ok=True, result=operation(source=source, directory=Path(tempfile.mkdtemp(prefix="capa-", dir=current_app.config["RESULTS_FOLDER"])), selected_layers=selected_layers))
+    return jsonify(ok=True, result=operation(source, tempfile.mkdtemp(prefix="capa-", dir=current_app.config["RESULTS_FOLDER"]), selected_layers))
 
-@api_bp.get("/gpkg_layers/<filepath>")
-def gpkg_layers(filepath):
+@api_bp.post("/gpkg_layers")
+def gpkg_layers():
     try:
+        filepath = json.loads(request.get_data()).get("filepath", "")
+        print(filepath)
         layers = list_geopackage_layers(Path(filepath))
         return jsonify(ok=True, layers=layers)
     except ValueError as exc:
@@ -245,10 +248,18 @@ def reproject():
 
 @api_bp.get("/download/<job_id>/<filename>")
 def download(job_id, filename):
-    from flask import send_from_directory, current_app
-    import os
     upload_folder = current_app.config["UPLOAD_FOLDER"]
     job_folder = os.path.join(upload_folder, job_id)
     if not os.path.exists(job_folder):
         return jsonify(ok=False, message="Trabajo no encontrado."), 404
     return send_from_directory(job_folder, f"errores_{filename}.gpkg", as_attachment=True )
+
+
+@api_bp.get("/descargar/<folder>/<file>")
+def descargar(folder,file):
+    print(folder,file)
+    tmp = current_app.config["RESULTS_FOLDER"]
+    result_folder = os.path.join(tmp,folder)
+    if not os.path.exists(result_folder):
+        return jsonify(ok=False, message="No se encontro la carpeta de trabajo"),404
+    return send_from_directory(result_folder,file,as_attachment=True)

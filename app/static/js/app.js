@@ -23,12 +23,12 @@ document.querySelectorAll('#formatFile, #reprojectFile').forEach((fileInput) => 
     const options = picker.querySelector('.gpkg-layer-options');
     let layerRequest = 0;
     let dragDepth = 0;
-    let ruta = '';
+    
 
     async function updateGpkgLayerOptions() {
         const requestId = ++layerRequest;
         const file = [...fileInput.files].find((item) => item.name.toLowerCase().endsWith('.gpkg'));
-        ruta = file ? "D:\\DESARROLLO\\Python\\datos\\" + file.name : '';
+        const ruta = file ? "E:\\Documents\\CODIGO_FUENTE\\INEGI\\Topografica2026\\recuperarCurvas\\datos\\" + file.name : '';
         selection.textContent = ruta;
 
 
@@ -48,28 +48,36 @@ document.querySelectorAll('#formatFile, #reprojectFile').forEach((fileInput) => 
         status.textContent = 'Consultando las capas del GeoPackage…';
 
         try {
-            const response = await fetch(`/api/gpkg_layers/${encodeURIComponent(ruta)}`, { method: 'GET' });
-            const payload = await response.json();
-            if (!response.ok || !payload.ok) {
-                throw new Error(payload.message || 'No se pudieron consultar las capas.');
-            }
-            if (requestId !== layerRequest) return;
+            await fetch("/api/gpkg_layers", 
+                {
+                 method: 'POST', 
+                 body: JSON.stringify({ filepath: ruta }), 
+                headers: { 'Content-Type': 'application/json' } 
+                }).then(response =>{ return response.json()}).then(payload=>{
+                
+                    if (!payload.ok) {
+                        throw new Error(payload.message || 'No se pudieron consultar las capas.');
+                    }
+                    if (requestId !== layerRequest) return;
 
-            payload.layers.forEach((layerName) => {
-                const label = document.createElement('label');
-                label.className = 'gpkg-layer-option';
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.name = 'selectedLayers';
-                checkbox.value = layerName;
-                const name = document.createElement('span');
-                name.textContent = layerName;
-                label.append(checkbox, name);
-                options.append(label);
-            });
-            status.textContent = payload.layers.length
-                ? 'Marca las capas que deseas procesar.'
-                : 'El GeoPackage no contiene capas.';
+                    payload.layers.forEach((layerName) => {
+                        const label = document.createElement('label');
+                        label.className = 'gpkg-layer-option';
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.name = 'selectedLayers';
+                        checkbox.value = layerName;
+                        const name = document.createElement('span');
+                        name.textContent = layerName;
+                        label.append(checkbox, name);
+                        options.append(label);
+                    });
+                    status.textContent = payload.layers.length
+                        ? 'Marca las capas que deseas procesar.'
+                        : 'El GeoPackage no contiene capas.';
+
+
+        });
         } catch (error) {
             if (requestId !== layerRequest) return;
             status.classList.add('error');
@@ -89,6 +97,7 @@ document.querySelectorAll('#formatFile, #reprojectFile').forEach((fileInput) => 
     selectFolderButton.addEventListener('click', () => folderInput.click());
 
     folderInput.addEventListener('change', () => {
+
         const transfer = new DataTransfer();
         [...folderInput.files].forEach((file) => {
             if (/\.(geojson|json|gpkg|shp|shx|dbf|prj|cpg|parquet)$/i.test(file.name)) {
@@ -266,7 +275,11 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
                 if (!data.ok) {
                     throw new Error(data.message || 'No se pudo procesar la capa.');
                 }
-                toolStatus.innerHTML = successMessage+"<br>"+`<div class="descargar"><a href="${data.result}">⇩</a></div>`;
+                toolStatus.innerHTML = successMessage
+                let id_job = data.result.split("\\")
+                let miArch = id_job[id_job.length-1]
+
+                toolButton.innerHTML  = `<a class="descargar" href="api/descargar/${miArch}" target='_blank'>⇩</a></div>`;
 
             });
             
