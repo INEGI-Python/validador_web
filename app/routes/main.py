@@ -3,4 +3,4 @@ main_bp = Blueprint("main", __name__)
 
 @main_bp.get("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html",small1="Seleccione la ubicacion de su archivo",small2="Sabe")

@@ -13,6 +13,7 @@ SHAPEFILE_COMPONENTS = {".shp", ".shx", ".dbf", ".prj", ".cpg"}
 
 def list_geopackage_layers(source_path: Path) -> list[str]:
     try:
+        print(source_path)
         layers = geo.list_layers(source_path)
     except Exception as exc:
         raise ValueError("No se pudieron consultar las capas del GeoPackage.") from exc

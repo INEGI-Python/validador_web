@@ -9,7 +9,7 @@ const form = document.querySelector('#uploadForm');
 const statusBox = document.querySelector('#status');
 const results = document.querySelector('#results');
 
-document.querySelectorAll('#convertFormatForm, #reprojectFile').forEach((fileInput) => {
+document.querySelectorAll('#toParquet, #reprojectFile').forEach((fileInput) => {
     const dropzone = fileInput.closest('.file-dropzone');
     let $selection = $(".file-selection");
     const form = fileInput.closest('form');
@@ -45,13 +45,14 @@ document.querySelectorAll('#convertFormatForm, #reprojectFile').forEach((fileInp
                  body: JSON.stringify({ filepath: res.ruta }), 
                 headers: { 'Content-Type': 'application/json' } 
                 }).then(response =>{ return response.json()}).then(payload=>{
-                
+                    console.log(payload)
                     if (!payload.ok) {
                         throw new Error(payload.message || 'No se pudieron consultar las capas.');
                     }
                     if (requestId !== layerRequest) return;
-
+                    picker.hidden=false
                     payload.layers.forEach((layerName) => {
+                        console.log(layerName)
                         const label = document.createElement('label');
                         label.className = 'gpkg-layer-option';
                         const checkbox = document.createElement('input');
@@ -82,6 +83,7 @@ document.querySelectorAll('#convertFormatForm, #reprojectFile').forEach((fileInp
     $("#seleccionarArchivo").on("click",()=>{
         $.get("api/seleccionar_archivo").done(res=>{
             updateGpkgLayerOptions(res)
+           picker.hidden=false
         })
     })
 
@@ -99,10 +101,6 @@ document.querySelectorAll('#convertFormatForm, #reprojectFile').forEach((fileInp
         });
         fileInput.files = transfer.files;
         fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-        selection.textContent = [...fileInput.files]
-            .map((file) => file.webkitRelativePath || file.name)
-            .join(', ');
-    });
 
     dropzone.addEventListener('dragenter', (event) => {
         event.preventDefault();
@@ -233,12 +231,13 @@ form.addEventListener('submit', async (event) => {
 function connectToolForm(formId, statusId, endpoint, progressMessage, successMessage) {
     const toolForm = document.querySelector(`#${formId}`);
     const toolStatus = document.querySelector(`#${statusId}`);
-    const toolButton = toolForm.querySelector('button[type="submit"]');
+    const toolButton = $("#btnConvierte")
+    const fileSelect = toolForm.querySelector('.file-selection')
     const layerPicker = toolForm.querySelector('.gpkg-layer-picker');
 
-    toolForm.addEventListener('submit', async (event) => {
-        event.preventDefault(); console.log(event)
+    toolButton.on('click', async (event) => {
         const seleccionados = [ ...layerPicker.querySelectorAll('input:checked') ];
+        console.log(seleccionados)
         if (!seleccionados.length) {
             toolStatus.classList.add('error');
             const options = layerPicker.querySelector('.gpkg-layer-options');
@@ -250,7 +249,7 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
             return;
         }
         if (!toolForm.reportValidity()) return;
-
+        
       
         
         let $capas = []
@@ -258,14 +257,14 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
             $capas.push(checkbox.value)
         }
 
-        toolButton.disabled = true;
+        toolButton.removeAttr("disabled")
         toolStatus.classList.remove('error');
         toolStatus.textContent = progressMessage;
 
         try {
             const response = await fetch(endpoint, {
                 method: 'POST',
-                body: JSON.stringify({gpkg: $(".file-selection").text(), layers: $capas }),
+                body: JSON.stringify({gpkg:fileSelect.textContent, layers: $capas }),
                 headers: {
                     'Content-Type': 'application/json'
                 }
@@ -277,7 +276,7 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
                 let id_job = data.result.split("\\")
                 let miArch = id_job[id_job.length-1]
 
-                toolButton.innerHTML  = `<a class="descargar" href="api/descargar/${miArch}" target='_blank'>⇩</a></div>`;
+                toolButton.html(`<a class="descargar" href="api/descargar/${miArch}" target='_blank'>⇩</a></div>`)
 
             });
             
@@ -303,7 +302,7 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
 }
 
 connectToolForm(
-    'convertFormatForm',
+    'toParquet',
     'convertStatus',
     '/api/convert',
     'Convirtiendo capa…',

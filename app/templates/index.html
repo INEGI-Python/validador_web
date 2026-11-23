@@ -77,14 +77,14 @@
   <section id="convertir-a-geoparquet" class="panel tool-section" hidden>
      <div class="hero"></div><h1>Convertir <br><span> a GeoParquet</span></div></h1>
     <p class="lead">Convierte una capa GeoJSON, GeoPackage o Shapefile a GeoParquet conservando su CRS.</p>
-    <form id="convertFormatForm">
+    <form id="toParquet">
       <div class="tool-fields">
         <div class="tool-field file-dropzone">Capa de origen
-          <small>Arrastra aquí los archivos o selecciona una ubicación local.</small>
+          <small>{{small1}}</small>
           <div class="local-file-actions">
             <button class="secondary" type="button" id="seleccionarArchivo">Seleccionar Archivo</button>
           </div>
-          <small class="file-selection" aria-live="polite"></small>
+          <small class="file-selection fConvert" aria-live="polite"></small>
         </div>
       </div>
       <fieldset id="formatGpkgLayers" class="gpkg-layer-picker" hidden>
@@ -106,12 +106,12 @@
         <div class="tool-field file-dropzone">Capa de origen
           <input id="reprojectFile" name="files" type="file" accept=".parquet,.geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" multiple required hidden>
           <input id="reprojectFolder" type="file" accept=".parquet,.geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" webkitdirectory directory multiple hidden>
-          <small>Arrastra aquí los archivos o selecciona una ubicación local.</small>
+          <small>{{small1}}</small>
           <div class="local-file-actions">
             <button class="secondary tool-select-files" type="button" data-file-input="reprojectFile">Seleccionar archivos</button>
             <button class="secondary tool-select-folder" type="button" data-folder-input="reprojectFolder">Seleccionar carpeta</button>
           </div>
-          <small class="file-selection" aria-live="polite"></small>
+          <small class="file-selection fReproj" aria-live="polite"></small>
         </div>
         <label class="tool-field" for="targetCrs">Sistema de referencia de destino (EPSG)
           <input id="targetCrs" name="targetCrs" type="text" placeholder="Ej. EPSG:4326" pattern="(EPSG:)?[0-9]+" required>
