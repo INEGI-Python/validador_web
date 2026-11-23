@@ -1,40 +1,65 @@
 const input=document.querySelector('#fileInput')
 const folderInput=document.querySelector('#folderInput')
 const selectFilesButton=document.querySelector('#selectFilesButton')
-const selectFolderButton=document.querySelector('#selectFolderButton')
 const zone = document.querySelector('#dropzone');
-const list = document.querySelector('#fileList');
+let $list = $('#fileList');
 const btn = document.querySelector('#validateBtn');
 const form = document.querySelector('#uploadForm');
 const statusBox = document.querySelector('#status');
 const results = document.querySelector('#results');
 
-document.querySelectorAll('#toParquet, #reprojectFile').forEach((fileInput) => {
+$(document).ready(function() {
+    $.get("/api/client-user", function(data) {
+    $("#userBadge").text(`INEGI · ${data.username || 'Usuario'}`);
+    });
+    // Check if the browser supports drag and drop
+    if (!('draggable' in document.createElement('span'))) {
+        zone.classList.add('hidden');
+        input.classList.remove('hidden');
+    }
+  document.querySelectorAll('.side-menu a').forEach(function(link){
+        
+    link.addEventListener('click',function(){
+      document.querySelectorAll('#validador, #convertir-a-geoparquet, #reproyectar-capa, #configurar-reglas').forEach(function(section){
+        section.hidden = section.id !== link.hash.slice(1);
+      });
+
+      document.querySelectorAll('.side-menu a').forEach(function(item){item.removeAttribute('aria-current')});
+      link.setAttribute('aria-current','page');
+    });
+  });
+  loadRuleConfiguration();
+});
+
+
+document.querySelectorAll('#toParquet, #reprojectLayerForm').forEach((fileInput) => {
     const dropzone = fileInput.closest('.file-dropzone');
     let $selection = $(".file-selection");
     const form = fileInput.closest('form');
+    const secundario = form.querySelector(".secondary");
     const status = form.querySelector('.tool-status');
     const picker = form.querySelector('.gpkg-layer-picker');
     const options = picker.querySelector('.gpkg-layer-options');
+    const primario = form.querySelector(".primary");   
     let layerRequest = 0;
     let dragDepth = 0;
     
 
     async function updateGpkgLayerOptions(res) {
         const requestId = ++layerRequest;
-        let $button = $("#btnConvierte")
+        
         options.replaceChildren();
-        picker.hidden = res.ok;
+        picker.hidden = !res.ok;
         if (!res.ok) {
             console.log(res.ok)
-            $button.attr("disabled");
+            primario.disabled=true
             status.textContent = '';
             status.classList.remove('error');
             return;
         }
         
         $selection.html(res.ruta);
-        $button.removeAttr("disabled")
+        primario.disabled=false
         status.classList.remove('error');
         status.textContent = 'Consultando las capas del GeoPackage…';
 
@@ -52,7 +77,6 @@ document.querySelectorAll('#toParquet, #reprojectFile').forEach((fileInput) => {
                     if (requestId !== layerRequest) return;
                     picker.hidden=false
                     payload.layers.forEach((layerName) => {
-                        console.log(layerName)
                         const label = document.createElement('label');
                         label.className = 'gpkg-layer-option';
                         const checkbox = document.createElement('input');
@@ -76,81 +100,16 @@ document.querySelectorAll('#toParquet, #reprojectFile').forEach((fileInput) => {
             status.textContent = error.message || 'No se pudieron consultar las capas.';
             picker.hidden = true;
         } finally {
-            if (requestId === layerRequest) $button.attr("disabled",false);
+            if (requestId === layerRequest) primario.disabled=false;
         }
     }
 
-    $("#seleccionarArchivo").on("click",()=>{
-        $.get("api/seleccionar_archivo").done(res=>{
+    secundario.addEventListener('click',() =>{
+        $.get("api/seleccionar_archivo/0").done(res=>{
             updateGpkgLayerOptions(res)
-           picker.hidden=false
         })
     })
 
-
-
-/*
-    folderInput.addEventListener('change', () => {
-
-        const transfer = new DataTransfer();
-        [...folderInput.files].forEach((file) => {
-            console.log(file)
-            if (/\.(geojson|json|gpkg|shp|shx|dbf|prj|cpg|parquet)$/i.test(file.name)) {
-                transfer.items.add(file);
-            }
-        });
-        fileInput.files = transfer.files;
-        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-
-    dropzone.addEventListener('dragenter', (event) => {
-        event.preventDefault();
-        dragDepth += 1;
-        dropzone.classList.add('drag');
-    });
-
-    dropzone.addEventListener('dragover', (event) => {event.preventDefault();  console.log(event)   });
-
-    dropzone.addEventListener('dragleave', (event) => {
-        event.preventDefault();  console.log(event);
-        dragDepth = Math.max(0, dragDepth - 1);
-        if (!dragDepth) dropzone.classList.remove('drag');
-    });
-
-    dropzone.addEventListener('drop', (event) => {
-        event.preventDefault();  console.log(event) 
-        dragDepth = 0;
-        dropzone.classList.remove('drag');
-        fileInput.files = event.dataTransfer.files;
-        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-
-
-    */
-});
-
-$(document).ready(function() {
-    $.get("/api/client-user", function(data) {
-    $("#userBadge").text(`INEGI · ${data.username || 'Usuario'}`);
-    });
-    // Check if the browser supports drag and drop
-    if (!('draggable' in document.createElement('span'))) {
-        zone.classList.add('hidden');
-        input.classList.remove('hidden');
-    }
-  document.querySelectorAll('.side-menu a').forEach(function(link){
-        
-    link.addEventListener('click',function(){
-      document.querySelectorAll('#validador, #convertir-a-geoparquet, #reproyectar-capa, #configurar-reglas').forEach(function(section){
-        section.hidden = section.id !== link.hash.slice(1);
-      });
-
-      document.querySelectorAll('.side-menu a').forEach(function(item){item.removeAttribute('aria-current')});
-      link.setAttribute('aria-current','page');
-    });
-  });
-  loadRuleConfiguration();
-
-  
 });
 
 
@@ -158,45 +117,36 @@ $(document).ready(function() {
 
 
 let selected=[];
-function setFiles(files) {
-    selected = [...files].filter((file) =>
-        file.name.toLowerCase().endsWith('.parquet'),
-    );
-    list.replaceChildren();
-    selected.forEach((file) => {
-        const item = document.createElement('div');
-        item.className = 'file';
-        const name = document.createElement('strong');
-        name.textContent = file.webkitRelativePath || file.name;
-        const size = document.createElement('span');
-        size.textContent = `${(file.size / 1048576).toFixed(1)} MB`;
-        item.append(name, size);
-        list.append(item);
+function setFiles(res) {
+    let $vali = $("#validateBtn")
+    console.log(Object(res).ruta[1])
+    //selected = [...files].filter((file) =>
+      //  file.toLowerCase().endsWith('.parquet'),
+    //);
+    res = Object(res)
+    $list.html("")
+    res.ruta.forEach((file,i,a) => {
+        rutas = file.split("/")
+        let $item = $('<div>').addClass('file').attr("id",i.toString());
+        let $name =  $("<div>").html($('<strong>').html(rutas[rutas.length-1])).addClass("nom parquet");
+        let $eliminar = $("<div>").html($("<i>").addClass("fa-solid fa-trash fa-float")).addClass("del parquet")
+        $item.append($name).append($eliminar.on("click",e=>{ alert(i+"- Nooooooooooooooooooooooo")}))
+        $list.append($item);
     });
-    btn.disabled = !selected.length;
+    $vali.removeAttr("disabled")
 }
 
-input.addEventListener('change', (event) => setFiles(event.target.files));
-folderInput.addEventListener('change', (event) => setFiles(event.target.files));
 
-selectFilesButton.addEventListener('click', () => input.click());
-selectFolderButton.addEventListener('click', () => folderInput.click());
+let $selParquet = $("#selectFilesButton")
+$selParquet.on("click",e=>{ $.get("api/seleccionar_archivo/1").done(setFiles) })
 
-['dragenter', 'dragover'].forEach((eventName) =>
-    zone.addEventListener(eventName, (event) => {
-        event.preventDefault();
-        zone.classList.add('drag');
-    }),
-);
+$vali.on('click',e=>{ $.post("api/validate",{}) })
 
-['dragleave', 'drop'].forEach((eventName) =>
-    zone.addEventListener(eventName, (event) => {
-        event.preventDefault();
-        zone.classList.remove('drag');
-    }),
-);
 
-zone.addEventListener('drop', (event) => setFiles(event.dataTransfer.files));
+
+
+
+
 
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -231,13 +181,15 @@ form.addEventListener('submit', async (event) => {
 function connectToolForm(formId, statusId, endpoint, progressMessage, successMessage) {
     const toolForm = document.querySelector(`#${formId}`);
     const toolStatus = document.querySelector(`#${statusId}`);
-    const toolButton = $("#btnConvierte")
+    const toolButton = toolForm.querySelector('.primary')
     const fileSelect = toolForm.querySelector('.file-selection')
     const layerPicker = toolForm.querySelector('.gpkg-layer-picker');
+    
 
-    toolButton.on('click', async (event) => {
+    toolButton.addEventListener('click', async (event) => {
+        let $este = $(event.currentTarget)
         const seleccionados = [ ...layerPicker.querySelectorAll('input:checked') ];
-        console.log(seleccionados)
+        
         if (!seleccionados.length) {
             toolStatus.classList.add('error');
             const options = layerPicker.querySelector('.gpkg-layer-options');
@@ -250,21 +202,33 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
         }
         if (!toolForm.reportValidity()) return;
         
-      
+        
         
         let $capas = []
         for (const checkbox of seleccionados) {
             $capas.push(checkbox.value)
         }
-
-        toolButton.removeAttr("disabled")
+        
+        toolButton.disabled=true
         toolStatus.classList.remove('error');
         toolStatus.textContent = progressMessage;
-
+        var datos = {gpkg:fileSelect.textContent, layers: $capas }
+        if ($este.attr("id")=="btnReproject"){
+            try{
+                const epsg = toolForm.querySelector('#targetCrs')
+                datos["epsg"] =epsg.value 
+            }catch(error){
+                toolStatus.classList.add('error');
+                toolStatus.textContent = "Debe escribir un EPSG y este debe ser correcto"
+                return 
+                
+            }
+        }
         try {
+            toolButton.innerHTML='<i class="fa-solid fa-spinner fa-spin-pulse fa-3x"></i>'
             const response = await fetch(endpoint, {
                 method: 'POST',
-                body: JSON.stringify({gpkg:fileSelect.textContent, layers: $capas }),
+                body: JSON.stringify(datos),
                 headers: {
                     'Content-Type': 'application/json'
                 }
@@ -276,8 +240,7 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
                 let id_job = data.result.split("\\")
                 let miArch = id_job[id_job.length-1]
 
-                toolButton.html(`<a class="descargar" href="api/descargar/${miArch}" target='_blank'>⇩</a></div>`)
-
+                toolButton.innerHTML = `<a class="descargar" href="api/descargar/${miArch}" target='_blank'><i class="fa-solid fa-download fa-3x"></i></a>`
             });
             
             // const file = await response.blob();
@@ -313,7 +276,7 @@ connectToolForm(
     'reprojectStatus',
     '/api/reproject',
     'Reproyectando capa…',
-    'Reproyección terminada. La descarga ha comenzado.',
+    'Reproyección terminada. De clic en el icono de descarga.',
 );
 
 

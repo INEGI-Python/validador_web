@@ -232,19 +232,16 @@ def gpkg_layers():
 
 @api_bp.post("/reproject")
 def reproject():
-    target_crs = request.form.get("targetCrs", "")
-
+    data = json.loads(request.get_data())
+    gpkg = Path(data.get("gpkg",""))
+    selected_layers=data.get("layers", [])
+    epsg = data.get("epsg","")
     def operation(source, directory, selected_layers):
         if source.suffix.lower() == ".gpkg":
-            return reproject_geopackage_layers(
-                source, target_crs, selected_layers, directory
-            )
-        return reproject_layer(source, target_crs, directory)
+            return reproject_geopackage_layers(Path(source), epsg, selected_layers, Path(directory))
+        return reproject_layer(Path(source), epsg, Path(directory))
 
-    return _tool_download(
-        operation,
-        {".geojson", ".json", ".gpkg", ".parquet", ".shp"},
-    )
+    return jsonify(ok=True, result=operation(gpkg, tempfile.mkdtemp(prefix="capa-reproyectada-", dir=current_app.config["RESULTS_FOLDER"]),selected_layers))
 
 
 @api_bp.get("/download/<job_id>/<filename>")
@@ -266,13 +263,16 @@ def descargar(folder,file):
     return send_from_directory(result_folder,file,as_attachment=True)
 
 
-@api_bp.get("/seleccionar_archivo")
-def seleccionar_archivo():
+@api_bp.get("/seleccionar_archivo/<multi>")
+def seleccionar_archivo(multi):
     root = Tk()
     root.withdraw()
     root.attributes("-topmost", True)
 
-    ruta = filedialog.askopenfilename(
+    ruta = filedialog.askopenfilenames(
+        title="Seleccione archivo .parquet",
+        filetypes=[("GeoParquet","*.parquet")]
+    ) if multi=="1" else filedialog.askopenfilename(
         title="Seleccione archivo geográfico",
         filetypes=[("GeoPackage","*.gpkg"),("Shapefile","*.shp"),("GeoJSON","*.geojson")]
     )

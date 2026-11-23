@@ -218,12 +218,18 @@ h1 span {
 }
 
 .gpkg-layer-picker {
-	display: grid;
-	gap: 10px;
-	margin: 20px 0;
-	padding: 16px;
-	border: 1px solid var(--line);
-	border-radius: 12px;
+    display: inline-flex;
+    gap: 10px;
+    margin: 20px 0;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    justify-items: flex-end;
+    align-items: end;
+    flex-direction: initial;
+    flex-wrap: initial;
+    max-height: 700px;
+    max-width: 100%;
 }
 
 .gpkg-layer-picker[hidden] {
@@ -240,15 +246,22 @@ h1 span {
 }
 
 .gpkg-layer-options {
-	display: grid;
-	gap: 8px;
+display: block;
+color:black;
+font-family: 'Century Gothic';
+font-size:smaller;
 }
 
 .gpkg-layer-option {
-	display: flex;
-	align-items: center;
-	gap: 9px;
-	overflow-wrap: anywhere;
+		    display: inline-flex;
+    flex-direction: row;
+    flex-flow: nowrap;
+    gap: 10px;
+    overflow-wrap: break-word;
+    padding-left: 19px;
+    width: 19%;
+	font-size: 90%;
+    flex-wrap: nowrap;
 }
 
 .rules-current {
@@ -411,12 +424,14 @@ h1 span {
     font-size: 15px;
     padding: 10px;
 	width: 100%;
+	color:white;
 }
 .descargar a{
     text-decoration: none;
     color: var(--red);
     font-weight: bold;
     font-size: 45px;
+	width: 100%;
 }
 .popup{
 	display:none;
@@ -443,8 +458,16 @@ h1 span {
 }
 .popup button:hover{
 	color:white;
-
 }
+
+.parquet{
+	display: inline-flex;
+}
+.del:hover{
+	cursor: pointer;
+	color:#e00404;
+}
+
 
 
     .bar{position:fixed;top:0;left:0;right:0;z-index:10}

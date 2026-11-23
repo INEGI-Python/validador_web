@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Informacion Topografica</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/fontawesome/all.css')}}">
   
 </head>
 <body>
@@ -56,23 +57,25 @@
     <form id="uploadForm">
       <div id="dropzone" class="dropzone">
         <div class="icon">⇧</div>
-        <strong>Arrastra aquí tus capas GeoParquet</strong>
-        <span>o pulsa para seleccionar archivos</span>
-        <small>Selecciona archivos o una carpeta local completa</small>
+        <strong>Presione el botón para seleccionar capas GeoParquet</strong>
+        <small>Debe de seleccionar todas las capas involucradas en las reglas topologicas de la capa a validar</small>
         <div class="local-file-actions">
           <button id="selectFilesButton" class="secondary" type="button">Seleccionar archivos</button>
-          <button id="selectFolderButton" class="secondary" type="button">Seleccionar carpeta</button>
         </div>
       </div>
-      <input id="fileInput" type="file" name="layers" accept=".parquet" multiple hidden>
-      <input id="folderInput" type="file" accept=".parquet" webkitdirectory directory multiple hidden>
+      
       <div id="fileList" class="file-list"></div>
-      <button id="validateBtn" class="primary" type="submit" disabled>Iniciar validación</button>
+      <button id="validateBtn" class="primary" type="button" disabled>Iniciar validación</button>
     </form>
   </section>
 
   <section id="status" class="status hidden"></section>
   <section id="results" class="results hidden"></section>
+
+
+
+
+
 
   <section id="convertir-a-geoparquet" class="panel tool-section" hidden>
      <div class="hero"></div><h1>Convertir <br><span> a GeoParquet</span></div></h1>
@@ -82,14 +85,13 @@
         <div class="tool-field file-dropzone">Capa de origen
           <small>{{small1}}</small>
           <div class="local-file-actions">
-            <button class="secondary" type="button" id="seleccionarArchivo">Seleccionar Archivo</button>
+            <button class="secondary" type="button" id="secu-convert">Seleccionar Archivo</button>
           </div>
           <small class="file-selection fConvert" aria-live="polite"></small>
         </div>
       </div>
       <fieldset id="formatGpkgLayers" class="gpkg-layer-picker" hidden>
-        <legend>Capas del GeoPackage</legend>
-        <p class="tool-hint">Selecciona una o varias capas para convertir.</p>
+        <legend >{{listaCapas}}</legend>
         <div class="gpkg-layer-options"></div>
       </fieldset>
       <p class="tool-hint">Para Shapefile, selecciona juntos los archivos .shp, .shx y .dbf.</p>
@@ -104,12 +106,9 @@
     <form id="reprojectLayerForm">
       <div class="tool-fields">
         <div class="tool-field file-dropzone">Capa de origen
-          <input id="reprojectFile" name="files" type="file" accept=".parquet,.geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" multiple required hidden>
-          <input id="reprojectFolder" type="file" accept=".parquet,.geojson,.json,.gpkg,.shp,.shx,.dbf,.prj,.cpg" webkitdirectory directory multiple hidden>
           <small>{{small1}}</small>
           <div class="local-file-actions">
-            <button class="secondary tool-select-files" type="button" data-file-input="reprojectFile">Seleccionar archivos</button>
-            <button class="secondary tool-select-folder" type="button" data-folder-input="reprojectFolder">Seleccionar carpeta</button>
+           <button class="secondary" type="button" id="secu-reproj">Seleccionar Archivo</button>
           </div>
           <small class="file-selection fReproj" aria-live="polite"></small>
         </div>
@@ -118,12 +117,11 @@
         </label>
       </div>
       <fieldset id="reprojectGpkgLayers" class="gpkg-layer-picker" hidden>
-        <legend>Capas del GeoPackage</legend>
-        <p class="tool-hint">Selecciona una o varias capas para reproyectar.</p>
+        <legend >{{listaCapas}}</legend>
         <div class="gpkg-layer-options"></div>
       </fieldset>
-      <p class="tool-hint">Para Shapefile, selecciona juntos los archivos .shp, .shx y .dbf. El resultado se descargará como un archivo ZIP.</p>
-      <button class="primary" type="submit">Reproyectar capa</button>
+      <p class="tool-hint">Para Shapefile, solo selecciona el .shp. El resultado se descargará como un archivo ZIP.</p>
+      <button class="primary" type="button" id="btnReproject" disabled>Reproyectar capa</button>
       <p id="reprojectStatus" class="tool-status" role="status" aria-live="polite"></p>
     </form>
   </section>
@@ -144,7 +142,7 @@
 
 <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
 
-
+<script src="{{ url_for('static', filename='js/fontawesome/all.js') }}"></script>
 
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>

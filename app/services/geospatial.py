@@ -95,7 +95,7 @@ def reproject_layer(
     target_crs: str,
     output_dir: Path,
     layer_name: str | None = None,
-) -> Path:
+):
     layer = read_layer(source_path, layer_name)
     if layer.crs is None:
         raise ValueError("La capa de origen no declara un CRS y no se puede reproyectar.")
@@ -128,12 +128,14 @@ def reproject_layer(
         shapefile_path = shapefile_dir / f"{output_stem}.shp"
         projected.to_file(shapefile_path, driver="ESRI Shapefile")
         output_path = output_dir / f"{output_stem}.zip"
+        
         with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as archive:
             for component in shapefile_dir.iterdir():
                 archive.write(component, component.name)
         shutil.rmtree(shapefile_dir)
 
-    return output_path
+    nom = str(output_path).split("\\")
+    return f"{nom[-2]}/{nom[-1]}"
 
 
 def reproject_geopackage_layers(
@@ -141,7 +143,7 @@ def reproject_geopackage_layers(
     target_crs: str,
     selected_layers: list[str],
     output_dir: Path,
-) -> Path:
+):
     layers = _selected_geopackage_layers(source_path, selected_layers)
     output_path = reproject_layer(source_path, target_crs, output_dir, layers[0])
     for layer_name in layers[1:]:
