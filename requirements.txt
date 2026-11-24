@@ -6,3 +6,5 @@ dask[distributed]
 pyarrow
 shapely
 pyogrio
+waitress
+pyinstaller

@@ -149,11 +149,13 @@ def _tool_download(operation, allowed_formats):
 
 @api_bp.post("/validate")
 def validate():
-    files = request.files.getlist("layers")
-    if not files:
+    data = json.loads(request.get_data())
+    print(data)
+    layers = data.get("layers",[])
+    if not layers:
         return jsonify(ok=False, message="No se recibieron archivos."), 400
     try:
-        result = prepare_and_validate(files)
+        result = prepare_and_validate(layers)
         return jsonify(ok=True, **result)
     except ValueError as exc:
         return jsonify(ok=False, message=str(exc)), 400

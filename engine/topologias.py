@@ -19,8 +19,7 @@ class Topo:
         self.errores = {}
 
     def cargarDatos(self):
-        print(f"cargando capa {self.capa}")
-        capa = dgeo.read_parquet(f"{self.ruta}{self.capa}.parquet",columns=['id','geometry'])
+        capa = dgeo.read_parquet(f"{self.ruta}{self.capa}")
         return capa.spatial_shuffle(by="hilbert").compute()
     def noSeparado(self,k):
         print(f"Si la capa {self.capa.upper()} se {self.reglas[k].get('funcion').split('(')[0]} con las capas  {self.reglas[k].get('capas',None)}, usando una tolerancia de {self.reglas[k].get('tolerancia')} con las siguientes excepciones {self.reglas[k].get('excepciones')}")

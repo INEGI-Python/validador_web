@@ -27,3 +27,12 @@ La sección **Configurar Reglas** muestra las reglas base de `engine/reglas.py` 
 ## Ejecución del motor
 
 El adaptador web ejecuta las reglas base existentes de forma compatible y las nuevas reglas mediante el campo `metodo`, restringido a los métodos disponibles del motor. El flujo de escritorio en `engine/topologias.py` conserva su ejecución independiente.
+
+## Uso local en otro equipo
+
+El programa está diseñado para ejecutarse localmente en Windows. No se requieren conexiones de red ni cargas de archivos desde un navegador.
+
+- El servidor Flask escucha únicamente en `127.0.0.1`.
+- Los archivos se seleccionan con los cuadros nativos de Windows.
+- Las reglas y resultados se almacenan junto al ejecutable, dentro de `instance/`.
+- Consulta [INSTALLACION_LOCAL_WINDOWS.md](INSTALLACION_LOCAL_WINDOWS.md) para empaquetar o instalar la aplicación.

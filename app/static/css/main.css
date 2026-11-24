@@ -1,6 +1,7 @@
 :root {
 	--bg: #f5f7f7;
 	--card: #fff;
+	--card-transp: rgba(255,255,255,0.85);
 	--ink: #16231f;
 	--muted: #697873;
 	--green: #176b52;
@@ -20,7 +21,21 @@ body {
 	color: var(--ink);
 	font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 }
+section{
+	background: var(--card-transp);
+}
 
+#logoTopo{
+	position: absolute;
+	width: 200px;
+	height: 200px;
+	bottom: 0%;
+	background-image: url("../img/Topo-Final.png");
+	background-size:contain;
+	background-position: center;
+	background-repeat: no-repeat;
+	
+}
 .bar {
 	height: 72px;
 	background: #fff;
@@ -97,7 +112,7 @@ h1 span {
 .panel,
 .status,
 .results {
-	background: var(--card);
+	background: var(--card-transp);
 	border: 1px solid var(--line);
 	border-radius: 22px;
 	padding: 24px;
@@ -158,9 +173,11 @@ h1 span {
 	color: #fff;
 	padding: 14px 18px;
 	font-weight: 800;
+}
+.primary:hover{
+	text-shadow: black 2px 4px 2px;
 	cursor: pointer;
 }
-
 .primary:disabled {
 	opacity: .4;
 	cursor: not-allowed;
@@ -415,23 +432,22 @@ font-size:smaller;
 .resultados{
     text-align: center;
     font-weight: bold;
-    font-size: 20px;
+    font-size: 17px;
 }
 .totales, .descargar{
     display: inline-flex;   
     justify-content: center;
     text-align: center;
     font-size: 15px;
-    padding: 10px;
-	width: 100%;
+    padding: 5px;
+	width: 80%;
 	color:white;
 }
-.descargar a{
-    text-decoration: none;
-    color: var(--red);
+.descargar{
+    color: var(--green2);
     font-weight: bold;
-    font-size: 45px;
-	width: 100%;
+    font-size: 12px;
+	width: 80%;
 }
 .popup{
 	display:none;
@@ -517,5 +533,8 @@ font-size:smaller;
 		margin-top: 24px;
 		display: grid;
 		gap: 12px;
+	}
+	#logoTopo{
+		display: none;
 	}
 }

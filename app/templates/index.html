@@ -43,6 +43,7 @@
       <span>Configurar Reglas</span>
     </a>
   </nav>
+  <div id="logoTopo"></div>
 </aside>
 
 
@@ -65,7 +66,7 @@
       </div>
       
       <div id="fileList" class="file-list"></div>
-      <button id="validateBtn" class="primary" type="button" disabled>Iniciar validación</button>
+      <button id="validateBtn" class="primary" type="button" disabled>Comenzar Validaciones Topológicas</button>
     </form>
   </section>
 
@@ -94,7 +95,7 @@
         <legend >{{listaCapas}}</legend>
         <div class="gpkg-layer-options"></div>
       </fieldset>
-      <p class="tool-hint">Para Shapefile, selecciona juntos los archivos .shp, .shx y .dbf.</p>
+      <p class="tool-hint">Para Shapefile, selecciona solo el archivo .shp</p>
       <button class="primary" type="button" id="btnConvierte" disabled>Convertir a GeoParquet</button>
       <p id="convertStatus" class="tool-status" role="status" aria-live="polite"></p>
     </form>

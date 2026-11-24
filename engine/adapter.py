@@ -9,10 +9,8 @@ import ast
 from app.services.rules_service import RULE_METHODS, load_rules
 
 try:
-    from .reglas import topologicas
     from .topologias import Topo
 except ImportError as exc:
-    topologicas = None
     Topo = None
     IMPORT_ERROR = exc
 else:
@@ -27,7 +25,8 @@ def _run_rule(topo, rule_name, rule):
     method_name = rule.get("metodo")
     if method_name:
         if method_name not in RULE_METHODS:
-            raise ValueError(f"Método topológico no permitido: {method_name}")
+            print(f"Método topológico no permitido: {method_name}")
+            return 
         getattr(topo, method_name)(rule_name)
         return
 
@@ -43,20 +42,21 @@ def _run_rule(topo, rule_name, rule):
         or not isinstance(expression.args[0], ast.Constant)
         or not isinstance(expression.args[0].value, str)
     ):
-        raise ValueError(f"La definición de la regla {rule_name} no es válida.")
+        print(f"La definición de la regla {rule_name} no es válida.")
+        return 
     getattr(topo, expression.func.attr)(expression.args[0].value)
 
 
-def validate_layer(folder: Path, layer_name: str):
+def validate_layer(folder: Path, layer_name: str, name_rule:str):
     if IMPORT_ERROR:
         raise RuntimeError(
-            "Falta integrar engine/reglas.py y engine/topologias.py. "
+            "Falta integrar engine/topologias.py. "
             f"Detalle: {IMPORT_ERROR}"
         )
-    rules = load_rules().get(layer_name)
+    rules = load_rules().get(name_rule)
     if not rules:
         return {
-            "layer": layer_name,
+            "layer": name_rule,
             "status": "sin_reglas",
             "rule_count": 0,
             "error_count": 0,
@@ -66,7 +66,6 @@ def validate_layer(folder: Path, layer_name: str):
     # Tu motor concatena ruta + capa + '.parquet', por eso conservamos '/' final.
     route = str(folder.resolve()) + "/"
     topo = Topo(route, layer_name, rules)
-
     execution_errors = []
     for rule_name, rule in topo.reglas.items():
         try:

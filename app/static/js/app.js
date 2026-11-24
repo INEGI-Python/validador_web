@@ -116,13 +116,12 @@ document.querySelectorAll('#toParquet, #reprojectLayerForm').forEach((fileInput)
 
 
 
+let $vali = $("#validateBtn")
+let $status = $("#status")
+let $resultado = $("#results")
 let selected=[];
 function setFiles(res) {
-    let $vali = $("#validateBtn")
-    console.log(Object(res).ruta[1])
-    //selected = [...files].filter((file) =>
-      //  file.toLowerCase().endsWith('.parquet'),
-    //);
+    $resultado.attr("hidden")
     res = Object(res)
     $list.html("")
     res.ruta.forEach((file,i,a) => {
@@ -134,49 +133,39 @@ function setFiles(res) {
         $list.append($item);
     });
     $vali.removeAttr("disabled")
+    $vali.on('click',e=>{ 
+        $vali.html('<i class="fa-solid fa-spinner fa-spin-pulse fa-3x"></i>')
+        $vali.attr("disabled")
+        $status.removeClass("hidden")
+        $status.html('<strong>Validando…</strong><p>El motor está cargando las capas y ejecutando sus reglas topológicas.</p>')
+        $.post("api/validate",JSON.stringify({layers:res.ruta})).done(payload=>{
+            $vali.removeAttr("disabled")
+            $vali.html("Comenzar Validaciones Topológicas")
+        if (!payload.ok) {
+            $status.html(payload.message || 'No fue posible validar')    
+            $status.addClass("bad")
+            throw new Error(payload.message || 'No fue posible validar.');
+        }
+        render(payload);
+    }).fail(error=>{ 
+        $status.removeClass("hidden")
+        $status.html(`<strong class="bad">No se completó la validación</strong><p>${error.responseJSON.message}</p>`)
+        $status.addClass("bad")
+            console.log(error)
+     }) })
+    
+    
 }
 
 
 let $selParquet = $("#selectFilesButton")
 $selParquet.on("click",e=>{ $.get("api/seleccionar_archivo/1").done(setFiles) })
 
-$vali.on('click',e=>{ $.post("api/validate",{}) })
 
 
 
 
 
-
-
-form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    if (!selected.length) return;
-
-    const data = new FormData();
-    selected.forEach((file) => data.append('layers', file));
-    btn.disabled = true;
-    statusBox.classList.remove('hidden');
-    statusBox.innerHTML = '<strong>Validando…</strong><p>El motor está cargando las capas y ejecutando sus reglas topológicas.</p>';
-    results.classList.add('hidden');
-
-    try {
-        const response = await fetch('/api/validate', {
-            method: 'POST',
-            body: data,
-        });
-        const payload = await response.json();
-
-        if (!response.ok || !payload.ok) {
-            throw new Error(payload.message || 'No fue posible validar.');
-        }
-
-        render(payload);
-    } catch (error) {
-        statusBox.innerHTML = `<strong class="bad">No se completó la validación</strong><p>${error.message}</p>`;
-    } finally {
-        btn.disabled = false;
-    }
-});
 
 function connectToolForm(formId, statusId, endpoint, progressMessage, successMessage) {
     const toolForm = document.querySelector(`#${formId}`);
@@ -236,25 +225,25 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
                 if (!data.ok) {
                     throw new Error(data.message || 'No se pudo procesar la capa.');
                 }
+                 toolButton.innerHTML="Convertir a GeoParquet"
                 toolStatus.innerHTML = successMessage
                 let id_job = data.result.split("\\")
                 let miArch = id_job[id_job.length-1]
-
-                toolButton.innerHTML = `<a class="descargar" href="api/descargar/${miArch}" target='_blank'><i class="fa-solid fa-download fa-3x"></i></a>`
+                
+                  
+                  // const file = await response.blob();
+                  // const disposition = response.headers.get('Content-Disposition') || '';
+                  // const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+                // const filename = filenameMatch ? filenameMatch[1] : 'capa-procesada';
+                const url = `api/descargar/${miArch}`;
+                const downloadLink = document.createElement('a');
+                downloadLink.href = url;
+                downloadLink.download = miArch;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                downloadLink.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
             });
-            
-            // const file = await response.blob();
-            // const disposition = response.headers.get('Content-Disposition') || '';
-            // const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
-            // const filename = filenameMatch ? filenameMatch[1] : 'capa-procesada';
-            // const url = URL.createObjectURL(file);
-            // const downloadLink = document.createElement('a');
-            // downloadLink.href = url;
-            // downloadLink.download = filename;
-            // document.body.appendChild(downloadLink);
-            // downloadLink.click();
-            // downloadLink.remove();
-            // setTimeout(() => URL.revokeObjectURL(url), 1000);
         } catch (error) {
             toolStatus.classList.add('error');
             toolStatus.textContent = error.message || 'No se pudo procesar la capa.';
@@ -268,15 +257,15 @@ connectToolForm(
     'toParquet',
     'convertStatus',
     '/api/convert',
-    'Convirtiendo capa…',
-    'Conversión terminada. De clic en el icono de descarga.',
+    'Convirtiendo capa...',
+    'Conversión terminada....  Ha comenzado la descarga.',
 );
 connectToolForm(
     'reprojectLayerForm',
     'reprojectStatus',
     '/api/reproject',
-    'Reproyectando capa…',
-    'Reproyección terminada. De clic en el icono de descarga.',
+    'Reproyectando capa...',
+    'Reproyección terminada...  Ha comenzado la descarga.',
 );
 
 
@@ -493,14 +482,15 @@ function setRulesStatus(message, isError = false) {
 }
 
 function render(payload) {
-    let $status = $("#status");
-    $status.removeClass("hidden");
-
+    
     let $resultados = $("<div>").html("Validación Terminada").addClass("resultados");
     let $totales = $("<div>").html(`Trabajo ${payload.job_id.slice(0, 8)} · ${payload.layers.length} capa(s)`).addClass("totales");
-    let $descargar = $("<div>").html($("<a>").attr("href", `/api/download/${payload.job_id}/${payload.layers[0]}`).text("⇩")).append("Descargar").addClass("descargar");
+    let tmp = payload.layers[0].split("/") 
+    let file = tmp[tmp.length-1]
+    let gpkg = payload.layers[0].replace(file,`errores_${file}.gpkg`)
+    let $descargar = $("<div>").html( `Las Inconsistencias encontradas se ubican en el siguiente geopackage <br> ${gpkg}`).addClass("descargar");
     $status.html($resultados).append($totales).append($descargar);
-
+    $status.addClass("ok")
     const totalRules = payload.results.reduce(
         (total, result) => total + result.rule_count,
         0,
@@ -515,7 +505,17 @@ function render(payload) {
     $resumen.append($("<div>").addClass("metric").html(`<span>Reglas ejecutadas</span><strong>${totalRules}</strong>`));
     $resumen.append($("<div>").addClass("metric").html(`<span>Errores detectados</span><strong class="${totalErrors ? 'bad' : 'ok'}">${totalErrors}</strong>`));
     $results = $("<div>").addClass("results").append($resumen);
-
+    let pos=1
+    let idInterval 
+    idInterval = setInterval(moverse,10)
+    function moverse(){
+         window.scrollTo({
+        top: pos,
+        behavior: 'smooth'
+      })
+      pos += 1;
+      if(pos==800) clearInterval(idInterval)
+    }
     payload.results.forEach((layer) => {
         $layerHeader = $("<h2>").text(layer.layer);
         $layerInfo = $("<p>").html(`${layer.rule_count} reglas · ${layer.error_count} errores`);
