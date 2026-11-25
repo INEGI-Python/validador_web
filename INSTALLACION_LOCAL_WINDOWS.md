@@ -14,10 +14,10 @@ Los archivos generados se guardan dentro de la carpeta `instance` junto al ejecu
 ## Para construir el paquete
 
 1. Instala Python 3.11 o 3.12 recomendado.
-2. Ejecuta desde PowerShell:
+2. Ejecuta desde cmd:
 
-```powershell
-.\build_windows.ps1
+```cmd
+.\build_windows.bat
 ```
 
 3. Distribuye toda la carpeta:

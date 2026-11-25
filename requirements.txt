@@ -7,4 +7,4 @@ pyarrow
 shapely
 pyogrio
 waitress
-pyinstaller
+pyInstaller
