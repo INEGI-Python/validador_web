@@ -7,6 +7,7 @@ from tkinter import Tk, filedialog
 from  concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 import uuid
+import geopandas as geo
 
 from app.services.geospatial import (
     SHAPEFILE_COMPONENTS,
@@ -46,12 +47,12 @@ def client_user():
 @api_bp.post("/validate")
 def validate():
     data = json.loads(request.get_data())
-    print(data)
     layers = data.get("layers",[])
+    reglas = data.get("reglas",[])
     if not layers:
         return jsonify(ok=False, message="No se recibieron archivos."), 400
     try:
-        result = prepare_and_validate(layers)
+        result = prepare_and_validate(layers,reglas)
         return jsonify(ok=True, **result)
     except ValueError as exc:
         return jsonify(ok=False, message=str(exc)), 400
@@ -195,19 +196,36 @@ tareas_bloqueada = Lock()
 
 #@api_bp.post("/convert")
 def convert(tarea_id:str,datos):
-    def operation(source, directory, selected_layers):
-        if source.suffix.lower() == ".gpkg":
-            return convert_geopackage_layers(source, selected_layers, directory)
-        return convert_to_geoparquet(Path(source), f"{directory}/{source.stem}.parquet")
+    # def operation(source, directory, selected_layers):
+    #     print("2-operation",source)
+    #     if source.suffix.lower() == ".gpkg":
+    #         tareas[tarea_id]["estado"]="En Operación"
+    #         tareas[tarea_id]["progreso"] = 1
+    #         tareas[tarea_id]["mensaje"]="Estamos trabajando convirtiendo sus datos"
+    #         print(tareas[tarea_id])
+    #         return convert_geopackage_layers(source, selected_layers, directory)
+    #     return convert_to_geoparquet(Path(source), f"{directory}/{source.stem}.parquet")
     
     try:
-        source= Path(datos.get("gpkg", ""))
+        tareas[tarea_id]["estado"]="En Operación"
+        tareas[tarea_id]["progreso"] = 1
+        tareas[tarea_id]["mensaje"]="Estamos trabajando convirtiendo sus datos"
+
+        source= datos.get("gpkg", "")
         selected_layers=datos.get("layers", [])
-        result = operation(source, tempfile.mkdtemp(prefix="capa-", dir=current_app.config["RESULTS_FOLDER"]), selected_layers)
+        gpkg = source.split("/")[-1]
+        output = source.replace(gpkg,"")
+        print("1-convert ",source,selected_layers,output)
+        result = []
+        for name in selected_layers:
+            gdf = geo.read_file(source,layer=name)
+            gdf.to_parquet(f"{output}{name}.parquet")
+            result.append(f"{output}{name}.parquet")
+        #result = operation(source, tempfile.mkdtemp(prefix="capa-", dir=current_app.config["RESULTS_FOLDER"]), selected_layers)
         with tareas_bloqueada:
             tareas[tarea_id]["estado"] ="Completado"
             tareas[tarea_id]["progreso"] = 100
-            tareas[tarea_id]["message"] = "Proceso Terminado con éxito"
+            tareas[tarea_id]["mensaje"] = "Proceso Terminado con éxito"
             tareas[tarea_id]["resultado"] = result
     except Exception as exc:
         with tareas_bloqueada:
@@ -225,15 +243,15 @@ def comenzar_tarea():
     with tareas_bloqueada:
         tareas[tarea_id]={
             "id":tarea_id,
-            "estado":"corriendo",
+            "estado":"Iniciando",
             "progreso":0,
-            "message":"Tarea iniciada....",
-            "result":None,
+            "mensaje":"Tarea iniciada....",
+            "resultado":None,
             "error":None
         }
 
     ejecutor.submit(convert,tarea_id,data)
-    return jsonify({"id_tarea":tarea_id,"estado":"corriendo"}),202
+    return jsonify(tareas[tarea_id]),202
 
 @api_bp.get("/estado_trabajos/<tarea_id>")
 def estado_trabajos(tarea_id:str):

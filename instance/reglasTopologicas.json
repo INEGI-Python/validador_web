@@ -3560,56 +3560,65 @@
       "funcion": "topo.pseudonodos('Pseudonodos')",
       "metodo": "pseudonodos",
       "codigo_regla": "RL01",
-      "descripcion": "No debe tener pseudo nodos"
+      "descripcion": "No debe tener pseudo nodos",
+      "enabled":true
     },
     "Nodos_Colgantes": {
       "funcion": "topo.nodos_colgantes('Nodos_Colgantes')",
       "metodo": "nodos_colgantes",
       "codigo_regla": "RL02",
-      "descripcion": "No debe tener nodos colgantes (dangles)"
+      "descripcion": "No debe tener nodos colgantes (dangles)",
+      "enabled":true
     },
     "Sobreponerse": {
       "funcion": "topo.sobreponerse('Sobreponerse')",
       "metodo": "sobreponerse",
       "codigo_regla": "RL03",
-      "descripcion": "No debe sobreponerse"
+      "descripcion": "No debe sobreponerse",
+      "enabled":true
     },
     "Intersecar": {
       "funcion": "topo.intersecar('Intersecar')",
       "metodo": "intersecar",
       "codigo_regla": "RL04",
-      "descripcion": "No debe cruzarse"
+      "descripcion": "No debe cruzarse",
+      "enabled":true
     },
     "Intersecar_Tocar_Interior": {
       "funcion": "topo.intersecar_tocar_interior('Intersecar_Tocar_Interior')",
       "metodo": "intersecar_tocar_interior",
       "codigo_regla": "RL05",
-      "descripcion": "No debe cruzarse ni tocar su interior"
+      "descripcion": "No debe cruzarse ni tocar su interior",
+      "enabled":true
     },
     "Sobreponerse_Mismo": {
       "funcion": "topo.sobreponerse_mismo('Sobreponerse_Mismo')",
       "metodo": "sobreponerse_mismo",
       "codigo_regla": "RL06",
-      "descripcion": "No debe sobreponerse consigo mismo"
+      "descripcion": "No debe sobreponerse consigo mismo",
+      "enabled":true
     },
     "Intersecar_Mismo": {
       "funcion": "topo.intersecar_mismo('Intersecar_Mismo')",
       "metodo": "intersecar_mismo",
       "codigo_regla": "RL07",
-      "descripcion": "No debe cruzarse consigo mismo"
+      "descripcion": "No debe cruzarse consigo mismo",
+      "enabled":true
     },
     "Multiparte": {
       "funcion": "topo.multiparte('Multiparte')",
       "metodo": "multiparte",
       "codigo_regla": "RL08",
-      "descripcion": "Debe ser una sola parte"
+      "descripcion": "Debe ser una sola parte",
+      "enabled":true
     },
     "Menor_Tolerancia_Cluster": {
       "funcion": "topo.menor_tolerancia_cluster('Menor_Tolerancia_Cluster')",
       "metodo": "menor_tolerancia_cluster",
       "codigo_regla": "RL0A",
       "descripcion": "Debe ser mayor que la tolerancia del clúster",
-      "tolerancia": 0.001
+      "tolerancia": 0.001,
+      "enabled":true
     },
     "Fuera_De": {
       "funcion": "topo.fueraDe('Fuera_De')",
@@ -3618,7 +3627,8 @@
       "descripcion": "Debe estar dentro de",
       "capas": [
         "poligono_nacional_a"
-      ]
+      ],
+      "enabled":true
     }
   },
   "curva_de_nivel_batimetrica_l": {
@@ -7753,14 +7763,16 @@
       "funcion": "topo.sobreponerse('Sobreponerse')",
       "metodo": "sobreponerse",
       "codigo_regla": "RA01",
-      "descripcion": "No debe sobreponerse"
+      "descripcion": "No debe sobreponerse",
+      "enabled": true
     },
     "Menor_Tolerancia_Cluster": {
       "funcion": "topo.menor_tolerancia_cluster('Menor_Tolerancia_Cluster')",
       "metodo": "menor_tolerancia_cluster",
       "codigo_regla": "RL0A",
       "descripcion": "Debe ser mayor que la tolerancia del clúster",
-      "tolerancia": 0.001
+      "tolerancia": 0.001,
+      "enabled": true
     }
   }
 }

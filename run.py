@@ -12,8 +12,8 @@ app = create_app()
 
 def find_ip():
     with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as s:
-        ip = get('https://api.ipify.org').text
-        s.connect((ip,80))
+        #ip = get('https://api.ipify.org').text
+        s.connect(("201.96.156.98",80))
         return s.getsockname()[0]
 
 def find_available_port(host):

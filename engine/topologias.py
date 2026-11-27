@@ -5,9 +5,8 @@ import geopandas as geo
 import dask_geopandas as dgeo
 from dask.distributed import Client
 from shapely.geometry import Point
-#import matplotlib.pyplot as plt
 from time import time as t
-from .reglas import topologicas
+
 
 
 class Topo:
@@ -19,7 +18,7 @@ class Topo:
         self.errores = {}
 
     def cargarDatos(self):
-        capa = dgeo.read_parquet(f"{self.ruta}{self.capa}")
+        capa = dgeo.read_parquet(f"{self.ruta}{self.capa}.parquet")
         return capa.spatial_shuffle(by="hilbert").compute()
     def noSeparado(self,k):
         print(f"Si la capa {self.capa.upper()} se {self.reglas[k].get('funcion').split('(')[0]} con las capas  {self.reglas[k].get('capas',None)}, usando una tolerancia de {self.reglas[k].get('tolerancia')} con las siguientes excepciones {self.reglas[k].get('excepciones')}")
@@ -244,43 +243,33 @@ class Topo:
 
 
 
-def inicio(_a):
-    topo = Topo(_a.folder_datos, _a.capa, topologicas.get(_a.capa, []))
-    for k in topo.reglas.keys():
-        print("* * "*20)
-        exec(topo.reglas[k]["funcion"])
-    key = topo.errores.keys()
-    if len(key)>0:
-        print(" ERRORES TOPOLOGICOS ENCONTRADOS ")
-        print(topo.errores)
 
+# def ventana_topologias():
+#     ventana = tk.Tk()
+#     ventana.title("Topologías disponibles")
+#     ventana.geometry("350x450")
+#     tk.Label(ventana, text="Capas a validar").pack(pady=8)
+#     selector = ttk.Combobox(ventana, values=list(topologicas), state="readonly")
+#     selector.pack(fill=tk.X, padx=10, pady=10)
 
-def ventana_topologias():
-    ventana = tk.Tk()
-    ventana.title("Topologías disponibles")
-    ventana.geometry("350x450")
-    tk.Label(ventana, text="Capas a validar").pack(pady=8)
-    selector = ttk.Combobox(ventana, values=list(topologicas), state="readonly")
-    selector.pack(fill=tk.X, padx=10, pady=10)
+#     def ejecutar(_evento=None):
+#         capa = selector.get()
+#         if capa:
+#             ventana.destroy()
+#             inicio(argparse.Namespace(capa=capa))
 
-    def ejecutar(_evento=None):
-        capa = selector.get()
-        if capa:
-            ventana.destroy()
-            inicio(argparse.Namespace(capa=capa))
-
-    selector.bind("<<ComboboxSelected>>", ejecutar)
-    ventana.mainloop()
+#     selector.bind("<<ComboboxSelected>>", ejecutar)
+#     ventana.mainloop()
         
 
-if __name__=="__main__":
-    args = argparse.ArgumentParser(description="Validacion de reglas topologicas")
-    args.add_argument("--capa",type=str,help="Nombre de la capa a validar")
-    _a = args.parse_args()
-    if _a.capa:
-        inicio(_a)
-    else:
-        ventana_topologias()
+# if __name__=="__main__":
+#     args = argparse.ArgumentParser(description="Validacion de reglas topologicas")
+#     args.add_argument("--capa",type=str,help="Nombre de la capa a validar")
+#     _a = args.parse_args()
+#     if _a.capa:
+#         inicio(_a)
+#     else:
+#         ventana_topologias()
 
 
 

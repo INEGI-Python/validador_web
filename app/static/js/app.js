@@ -7,6 +7,8 @@ const btn = document.querySelector('#validateBtn');
 const form = document.querySelector('#uploadForm');
 const statusBox = document.querySelector('#status');
 const results = document.querySelector('#results');
+let reglasTopo = null
+
 
 $(document).ready(function() {
     $.get("/api/client-user", function(data) {
@@ -28,7 +30,10 @@ $(document).ready(function() {
       link.setAttribute('aria-current','page');
     });
   });
-  loadRuleConfiguration();
+   $.get("/api/rules").done(res=>{ 
+        reglasTopo = res.layers
+        loadRuleConfiguration(res);
+    })
 });
 
 
@@ -138,7 +143,10 @@ function setFiles(res) {
         $vali.attr("disabled")
         $status.removeClass("hidden")
         $status.html('<strong>Validando…</strong><p>El motor está cargando las capas y ejecutando sus reglas topológicas.</p>')
-        $.post("api/validate",JSON.stringify({layers:res.ruta})).done(payload=>{
+        
+        let rules = {}
+        res.ruta.forEach(r=>{tmp=r.split("/");console.log(tmp);nom=tmp[tmp.length-1].split(".")[0]; console.log(nom);   rules[nom]=reglasTopo[nom];  console.log(rules); })
+        $.post("api/validate",JSON.stringify({layers:res.ruta,reglas:rules})).done(payload=>{
             $vali.removeAttr("disabled")
             $vali.html("Comenzar Validaciones Topológicas")
         if (!payload.ok) {
@@ -193,35 +201,35 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
 
         try {
             const res = await fetch(`/api/estado_trabajos/${encodeURIComponent(jobId)}`);
-            if (!res.ok) {
-            throw new Error(`Error HTTP ${res.status}`);
-            }
-
             const data = await res.json();
-            toolStatus.innerHTML = data.state;
+            toolStatus.innerHTML += " .";
 
             if (data.estado === "Completado") {
                 stopPolling();
-
+                let salida = ""
+                data.resultado.forEach(d=>salida+= d+"<br>")
                 toolButton.innerHTML="Convertir a GeoParquet"
-                toolStatus.innerHTML = successMessage
-                let id_job = data.result.split("\\")
-                let miArch = id_job[id_job.length-1]
+                toolStatus.innerHTML = data.mensaje + "<br>"+ salida
+
+
+
+                // let id_job = data.resultado.split("\\")
+                // let miArch = id_job[id_job.length-1]
                 
-                const url = `api/descargar/${miArch}`;
-                const downloadLink = document.createElement('a');
-                downloadLink.href = url;
-                downloadLink.download = miArch;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                downloadLink.remove();
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                // const url = `api/descargar/${miArch}`;
+                // const downloadLink = document.createElement('a');
+                // downloadLink.href = url;
+                // downloadLink.download = miArch;
+                // document.body.appendChild(downloadLink);
+                // downloadLink.click();
+                // downloadLink.remove();
+                // setTimeout(() => URL.revokeObjectURL(url), 1000);
 
             } else if (data.estado === "Fallido") {
                 stopPolling();
                 toolButton.innerHTML="Convertir a GeoParquet"
                 toolStatus.style.display = "block";
-                toolStatus.innerHTML = `Error: ${data.error || data.message}`;
+                toolStatus.innerHTML = `Error: ${data.error || data.mensaje}`;
             }
         } catch (err) {
             console.error("Error consultando estado:", err);
@@ -282,7 +290,7 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
                 }
             }).then((response) => response.json()).then((data) => {
                 toolStatus.innerHTML = data.estado
-                pollIntervalId =setInterval(()=>checkStatus(data.id_tarea),5000);
+                pollIntervalId =setInterval(()=>checkStatus(data.id),3000);
 
                
             });
@@ -369,7 +377,7 @@ if (addLayerRulesForm) {
     });
 }
 
-async function loadRuleConfiguration() {
+async function loadRuleConfiguration(payload) {
     const configuredRules = document.querySelector('#configuredRules');
     const availableRules = document.querySelector('#availableRules');
     configuredRules.textContent = 'Cargando reglas…';
@@ -378,8 +386,6 @@ async function loadRuleConfiguration() {
     }
 
     try {
-        const response = await fetch('/api/rules');
-        const payload = await response.json();
         if (!response.ok || !payload.ok) {
             throw new Error(payload.message || 'No se pudieron cargar las reglas.');
         }
@@ -406,7 +412,7 @@ function renderConfiguredRules(layers) {
         const card = document.createElement('details');
         card.className = 'configured-layer';
         const summary = document.createElement('summary');
-        const layerIsEnabled = layers[layerName]._enabled !== false;
+        const layerIsEnabled = layers[layerName].enabled !== false;
         const entries = Object.entries(layers[layerName] || {})
             .filter(([name]) => name !== '_enabled');
         const layerToggleLabel = document.createElement('label');

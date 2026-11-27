@@ -17,11 +17,11 @@ def create_app():
     bundled_instance = bundled_root / "instance"
     runtime_instance.mkdir(parents=True, exist_ok=True)
 
-    for filename in ("reglas.json", "reglasTopologicas.json"):
-        target = runtime_instance / filename
-        source = bundled_instance / filename
-        if not target.exists() and source.exists():
-            shutil.copy2(source, target)
+    filename = "reglasTopologicas.json"
+    target = runtime_instance / filename
+    source = bundled_instance / filename
+    if not target.exists() and source.exists():
+        shutil.copy2(source, target)
 
     app = Flask(
         __name__,

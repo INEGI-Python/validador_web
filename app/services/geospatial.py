@@ -57,22 +57,21 @@ def read_layer(source_path: Path, layer_name: str | None = None):
         raise ValueError("No se pudo leer la capa. Verifica el archivo y sus componentes.") from exc
 
 
-def convert_to_geoparquet(
-    source_path: Path, output_path: str, layer_name: str | None = None
-)-> str:
+def convert_to_geoparquet(source_path: Path, output_path: str, layer_name: str | None = None)-> str:
     if source_path.suffix.lower() == ".parquet":
-        raise ValueError("La capa ya está en formato GeoParquet.")
-
+        return "La capa ya está en formato GeoParquet."
+    print(source_path,layer_name)
     layer = read_layer(source_path, layer_name)
     try:
         layer.to_parquet(output_path, index=False)
     except Exception as exc:
-        raise ValueError("No se pudo convertir la capa a GeoParquet.") from exc
+        return f"No se pudo convertir la capa a GeoParquet. Error: {exc}"
     return output_path
 
 
 def convert_geopackage_layers(source_path, selected_layers, output_dir):
     layers = _selected_geopackage_layers(source_path, selected_layers)
+    print(layers)
     if len(layers) == 1:
         output_path = f"{output_dir}/{source_path.stem}.parquet"
         return convert_to_geoparquet(Path(source_path), output_path, layers[0])
@@ -81,8 +80,9 @@ def convert_geopackage_layers(source_path, selected_layers, output_dir):
     for index, layer_name in enumerate(layers, start=1):
         safe_name = secure_filename(layer_name) or "capa"
         output_path = f"{output_dir}/{safe_name}.parquet"
+        print(output_path)
         outputs.append(convert_to_geoparquet(Path(source_path), output_path, layer_name))
-
+    print(outputs)
     outzip_path = f"{output_dir}/{source_path.stem}_capas.zip"
     with zipfile.ZipFile(Path(outzip_path), "w", zipfile.ZIP_DEFLATED) as archive:
         for layer_path in outputs:

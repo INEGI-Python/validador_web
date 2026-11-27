@@ -7,7 +7,7 @@ from pathlib import Path
 
 from flask import current_app, has_app_context
 
-from engine.reglas import topologicas as DEFAULT_RULES
+rules_path = Path("instance/reglasTopologicas.json")
 
 
 RULE_METHODS = {
@@ -26,12 +26,15 @@ NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$")
 
 
 def load_rules():
-    if not has_app_context():
-        return deepcopy(DEFAULT_RULES)
+    
+    # if not has_app_context():
+    #     return deepcopy(DEFAULT_RULES)
 
-    rules_path = Path(current_app.config["RULES_FILE"])
-    if not rules_path.exists():
-        return deepcopy(DEFAULT_RULES)
+    # rules_path = Path(current_app.config["RULES_FILE"])
+    # if not rules_path.exists():
+    #     return deepcopy(DEFAULT_RULES)
+
+    
     try:
         with rules_path.open(encoding="utf-8") as file:
             rules = json.load(file)

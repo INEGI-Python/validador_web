@@ -47,25 +47,25 @@ def _run_rule(topo, rule_name, rule):
     getattr(topo, expression.func.attr)(expression.args[0].value)
 
 
-def validate_layer(folder: Path, layer_name: str, name_rule:str):
+def validate_layer(folder: Path, layer_name: str, layer_rules:str):
     if IMPORT_ERROR:
         raise RuntimeError(
             "Falta integrar engine/topologias.py. "
             f"Detalle: {IMPORT_ERROR}"
         )
-    layer_rules = load_rules().get(name_rule)
+    print(layer_rules)
     if not layer_rules:
         return {
-            "layer": name_rule,
+            "layer": layer_name,
             "status": "sin_reglas",
             "rule_count": 0,
             "error_count": 0,
             "rules": []
         }
 
-    if layer_rules.get("_enabled", True) is False:
+    if layer_rules.get("enabled", True) is False:
         return {
-            "layer": name_rule,
+            "layer": layer_name,
             "status": "deshabilitada",
             "rule_count": 0,
             "error_count": 0,
@@ -79,7 +79,7 @@ def validate_layer(folder: Path, layer_name: str, name_rule:str):
     }
     if not rules:
         return {
-            "layer": name_rule,
+            "layer": layer_name,
             "status": "sin_reglas_activas",
             "rule_count": 0,
             "error_count": 0,
