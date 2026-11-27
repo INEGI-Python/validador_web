@@ -214,7 +214,8 @@
       "funcion": "topo.sobreponerse('Sobreponerse')",
       "metodo": "sobreponerse",
       "codigo_regla": "RA01",
-      "descripcion": "No debe sobreponerse"
+      "descripcion": "No debe sobreponerse",
+      "enabled": true
     },
     "Fuera_De": {
       "funcion": "topo.fueraDe('Fuera_De')",
@@ -227,14 +228,16 @@
       ],
       "excepciones": [
         "No aplica cuando el objeto Aeródromo esta fuera de la Localidad geoestadística"
-      ]
+      ],
+      "enabled": true
     },
     "Menor_Tolerancia_Cluster": {
       "funcion": "topo.menor_tolerancia_cluster('Menor_Tolerancia_Cluster')",
       "metodo": "menor_tolerancia_cluster",
       "codigo_regla": "RL0A",
       "descripcion": "Debe ser mayor que la tolerancia del clúster",
-      "tolerancia": 0.001
+      "tolerancia": 0.001,
+      "enabled": true
     }
   },
   "aerodromo_p": {
@@ -242,7 +245,8 @@
       "funcion": "topo.noSeparado('No_Separado')",
       "metodo": "noSeparado",
       "codigo_regla": "RP01",
-      "descripcion": "Debe estar separado"
+      "descripcion": "Debe estar separado",
+      "enabled": true
     },
     "Fuera_De": {
       "funcion": "topo.fueraDe('Fuera_De')",
@@ -255,7 +259,8 @@
       ],
       "excepciones": [
         "No aplica cuando el objeto Aeródromo esta fuera de la Localidad geoestadística"
-      ]
+      ],
+      "enabled": true
     }
   },
   "conducto_l": {
@@ -1724,7 +1729,8 @@
       "funcion": "topo.sobreponerse('Sobreponerse')",
       "metodo": "sobreponerse",
       "codigo_regla": "RA01",
-      "descripcion": "No debe sobreponerse"
+      "descripcion": "No debe sobreponerse",
+      "enabled": true
     },
     "Fuera_De": {
       "funcion": "topo.fueraDe('Fuera_De')",
@@ -1737,14 +1743,16 @@
       ],
       "excepciones": [
         "No aplica cuando el objeto Aduana esta fuera de la Localidad geoestadística"
-      ]
+      ],
+      "enabled": true
     },
     "Menor_Tolerancia_Cluster": {
       "funcion": "topo.menor_tolerancia_cluster('Menor_Tolerancia_Cluster')",
       "metodo": "menor_tolerancia_cluster",
       "codigo_regla": "RL0A",
       "descripcion": "Debe ser mayor que la tolerancia del clúster",
-      "tolerancia": 0.001
+      "tolerancia": 0.001,
+      "enabled": true
     }
   },
   "aduana_p": {
@@ -1752,7 +1760,8 @@
       "funcion": "topo.noSeparado('No_Separado')",
       "metodo": "noSeparado",
       "codigo_regla": "RP01",
-      "descripcion": "Debe estar separado"
+      "descripcion": "Debe estar separado",
+      "enabled": true
     },
     "Fuera_De": {
       "funcion": "topo.fueraDe('Fuera_De')",
@@ -1765,7 +1774,8 @@
       ],
       "excepciones": [
         "No aplica cuando el objeto Aduana esta fuera de la Localidad geoestadística"
-      ]
+      ],
+      "enabled": true
     }
   },
   "sismo_p": {
@@ -6674,7 +6684,8 @@
       "funcion": "topo.noSeparado('No_Separado')",
       "metodo": "noSeparado",
       "codigo_regla": "RP01",
-      "descripcion": "Debe estar separado"
+      "descripcion": "Debe estar separado",
+      "enabled": true
     },
     "Fuera_De": {
       "funcion": "topo.fueraDe('Fuera_De')",
@@ -6683,8 +6694,10 @@
       "descripcion": "Debe estar dentro de",
       "capas": [
         "poligono_nacional_a"
-      ]
-    }
+      ],
+      "enabled": true
+    },
+    "_enabled": true
   },
   "barra_p": {
     "No_Separado": {

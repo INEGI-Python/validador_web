@@ -1,0 +1,66 @@
+
+Configuraci¢n IP de Windows
+
+
+Adaptador de Ethernet Ethernet 3:
+
+   Estado de los medios. . . . . . . . . . . : medios desconectados
+   Sufijo DNS espec¡fico para la conexi¢n. . : 
+
+Adaptador de Ethernet Ethernet 4:
+
+   Estado de los medios. . . . . . . . . . . : medios desconectados
+   Sufijo DNS espec¡fico para la conexi¢n. . : 
+
+Adaptador de Ethernet Ethernet 2:
+
+   Sufijo DNS espec¡fico para la conexi¢n. . : 
+   Direcci¢n IPv6 . . . . . . . . . . : 2806:264:7406:250:94d:bc4e:e9:59ff
+   Direcci¢n IPv6 temporal. . . . . . : 2806:264:7406:250:d522:49e:f44e:338
+   V¡nculo: direcci¢n IPv6 local. . . : fe80::43f2:a125:a9e9:be64%24
+   Direcci¢n IPv4. . . . . . . . . . . . . . : 192.168.1.11
+   M scara de subred . . . . . . . . . . . . : 255.255.255.0
+   Puerta de enlace predeterminada . . . . . : fe80::1%24
+                                       192.168.1.1
+
+Adaptador de LAN inal mbrica Local Area Connection* 8:
+
+   Estado de los medios. . . . . . . . . . . : medios desconectados
+   Sufijo DNS espec¡fico para la conexi¢n. . : 
+
+Adaptador de LAN inal mbrica Local Area Connection* 9:
+
+   Estado de los medios. . . . . . . . . . . : medios desconectados
+   Sufijo DNS espec¡fico para la conexi¢n. . : 
+
+Adaptador de LAN inal mbrica Wi-Fi:
+
+   Sufijo DNS espec¡fico para la conexi¢n. . : 
+   Direcci¢n IPv6 . . . . . . . . . . : 2806:264:7406:250:f588:9c67:6f10:fb02
+   Direcci¢n IPv6 temporal. . . . . . : 2806:264:7406:250:89ee:ae1:2ebc:8481
+   V¡nculo: direcci¢n IPv6 local. . . : fe80::59ac:39fd:579b:dd84%9
+   Direcci¢n IPv4. . . . . . . . . . . . . . : 192.168.1.19
+   M scara de subred . . . . . . . . . . . . : 255.255.255.0
+   Puerta de enlace predeterminada . . . . . : fe80::1%9
+                                       192.168.1.1
+
+Adaptador de Ethernet Bluetooth Network Connection:
+
+   Estado de los medios. . . . . . . . . . . : medios desconectados
+   Sufijo DNS espec¡fico para la conexi¢n. . : 
+
+Adaptador de Ethernet vEthernet (Default Switch):
+
+   Sufijo DNS espec¡fico para la conexi¢n. . : 
+   V¡nculo: direcci¢n IPv6 local. . . : fe80::faee:a0f9:8371:7688%30
+   Direcci¢n IPv4. . . . . . . . . . . . . . : 172.19.64.1
+   M scara de subred . . . . . . . . . . . . : 255.255.240.0
+   Puerta de enlace predeterminada . . . . . : 
+
+Adaptador de Ethernet vEthernet (WSL (Hyper-V firewall)):
+
+   Sufijo DNS espec¡fico para la conexi¢n. . : 
+   V¡nculo: direcci¢n IPv6 local. . . : fe80::35d5:c03a:e5c4:db3f%84
+   Direcci¢n IPv4. . . . . . . . . . . . . . : 172.30.0.1
+   M scara de subred . . . . . . . . . . . . : 255.255.240.0
+   Puerta de enlace predeterminada . . . . . : 

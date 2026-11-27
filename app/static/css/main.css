@@ -347,20 +347,28 @@ font-size:smaller;
 	overflow-wrap: anywhere;
 }
 
-.delete-rule {
-	flex: 0 0 auto;
-	border: 1px solid #e6baba;
-	border-radius: 7px;
-	padding: 6px 10px;
-	background: #fff;
-	color: var(--red);
-	font: inherit;
-	font-size: 13px;
+.layer-name-toggle {
+	display: flex;
+	align-items: center;
+	gap: 10px;
 	cursor: pointer;
 }
 
-.delete-rule:hover {
-	background: #fff3f3;
+.layer-name-toggle input,
+.rule-toggle input {
+	flex: 0 0 auto;
+	accent-color: var(--green);
+	width: 18px;
+	height: 18px;
+	cursor: pointer;
+}
+
+.rule-toggle {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	cursor: pointer;
 }
 
 .available-rules {

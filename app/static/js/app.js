@@ -164,9 +164,6 @@ $selParquet.on("click",e=>{ $.get("api/seleccionar_archivo/1").done(setFiles) })
 
 
 
-
-
-
 function connectToolForm(formId, statusId, endpoint, progressMessage, successMessage) {
     const toolForm = document.querySelector(`#${formId}`);
     const toolStatus = document.querySelector(`#${statusId}`);
@@ -174,6 +171,68 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
     const fileSelect = toolForm.querySelector('.file-selection')
     const layerPicker = toolForm.querySelector('.gpkg-layer-picker');
     
+
+    
+/************************************************************************/
+
+    let pollIntervalId = null;
+    let isChecking = false;
+
+    function stopPolling() {
+        if (pollIntervalId !== null) {
+            clearInterval(pollIntervalId);
+            pollIntervalId = null;
+        }
+        toolButton.disabled = false;
+    }
+
+    async function checkStatus(jobId) {
+    // Evita solapar peticiones si el servidor tarda más que el intervalo
+        if (isChecking) return;
+        isChecking = true;
+
+        try {
+            const res = await fetch(`/api/estado_trabajos/${encodeURIComponent(jobId)}`);
+            if (!res.ok) {
+            throw new Error(`Error HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            toolStatus.innerHTML = data.state;
+
+            if (data.estado === "Completado") {
+                stopPolling();
+
+                toolButton.innerHTML="Convertir a GeoParquet"
+                toolStatus.innerHTML = successMessage
+                let id_job = data.result.split("\\")
+                let miArch = id_job[id_job.length-1]
+                
+                const url = `api/descargar/${miArch}`;
+                const downloadLink = document.createElement('a');
+                downloadLink.href = url;
+                downloadLink.download = miArch;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                downloadLink.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+            } else if (data.estado === "Fallido") {
+                stopPolling();
+                toolButton.innerHTML="Convertir a GeoParquet"
+                toolStatus.style.display = "block";
+                toolStatus.innerHTML = `Error: ${data.error || data.message}`;
+            }
+        } catch (err) {
+            console.error("Error consultando estado:", err);
+        } finally {
+            isChecking = false;
+        }
+    }
+
+/*******************************************************************/
+
+
 
     toolButton.addEventListener('click', async (event) => {
         let $este = $(event.currentTarget)
@@ -222,27 +281,10 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
                     'Content-Type': 'application/json'
                 }
             }).then((response) => response.json()).then((data) => {
-                if (!data.ok) {
-                    throw new Error(data.message || 'No se pudo procesar la capa.');
-                }
-                 toolButton.innerHTML="Convertir a GeoParquet"
-                toolStatus.innerHTML = successMessage
-                let id_job = data.result.split("\\")
-                let miArch = id_job[id_job.length-1]
-                
-                  
-                  // const file = await response.blob();
-                  // const disposition = response.headers.get('Content-Disposition') || '';
-                  // const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
-                // const filename = filenameMatch ? filenameMatch[1] : 'capa-procesada';
-                const url = `api/descargar/${miArch}`;
-                const downloadLink = document.createElement('a');
-                downloadLink.href = url;
-                downloadLink.download = miArch;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                downloadLink.remove();
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                toolStatus.innerHTML = data.estado
+                pollIntervalId =setInterval(()=>checkStatus(data.id_tarea),5000);
+
+               
             });
         } catch (error) {
             toolStatus.classList.add('error');
@@ -256,7 +298,7 @@ function connectToolForm(formId, statusId, endpoint, progressMessage, successMes
 connectToolForm(
     'toParquet',
     'convertStatus',
-    '/api/convert',
+    '/api/comenzar_tarea',
     'Convirtiendo capa...',
     'Conversión terminada....  Ha comenzado la descarga.',
 );
@@ -364,13 +406,31 @@ function renderConfiguredRules(layers) {
         const card = document.createElement('details');
         card.className = 'configured-layer';
         const summary = document.createElement('summary');
+        const layerIsEnabled = layers[layerName]._enabled !== false;
+        const entries = Object.entries(layers[layerName] || {})
+            .filter(([name]) => name !== '_enabled');
+        const layerToggleLabel = document.createElement('label');
+        layerToggleLabel.className = 'layer-name-toggle';
+        const layerToggle = document.createElement('input');
+        layerToggle.type = 'checkbox';
+        layerToggle.role = 'switch';
+        layerToggle.checked = entries.length > 0
+            && layerIsEnabled
+            && entries.every(([, rule]) => rule.enabled !== false);
+        layerToggle.setAttribute('aria-label', `Activar todas las reglas de la capa ${layerName}`);
+        layerToggle.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+        layerToggle.addEventListener('change', () => {
+            updateLayerEnabled(layerName, layerToggle.checked);
+        });
         const title = document.createElement('strong');
         title.textContent = layerName;
+        layerToggleLabel.append(layerToggle, title);
         const count = document.createElement('span');
-        const entries = Object.entries(layers[layerName] || {});
         count.className = 'rule-count';
         count.textContent = `${entries.length} regla${entries.length === 1 ? '' : 's'}`;
-        summary.append(title, count);
+        summary.append(layerToggleLabel, count);
         card.append(summary);
 
         const list = document.createElement('ul');
@@ -381,16 +441,21 @@ function renderConfiguredRules(layers) {
             if (rule.capas && rule.capas.length) details.push(`capas: ${rule.capas.join(', ')}`);
             if (rule.tolerancia !== undefined) details.push(`tolerancia: ${rule.tolerancia}`);
             if (rule.excepciones || rule.excepcion) details.push(`excepciones: ${rule.excepciones || rule.excepcion}`);
+            const label = document.createElement('label');
+            label.className = 'rule-toggle';
+            const toggle = document.createElement('input');
+            toggle.type = 'checkbox';
+            toggle.role = 'switch';
+            toggle.checked = layerIsEnabled && rule.enabled !== false;
+            toggle.setAttribute('aria-label', `Activar regla ${name} de ${layerName}`);
+            toggle.addEventListener('change', () => {
+                updateRuleEnabled(layerName, name, toggle.checked);
+            });
             const description = document.createElement('span');
             description.className = 'configured-rule-description';
             description.textContent = `${name} — ${method}${details.length ? ` (${details.join('; ')})` : ''}`;
-            const deleteButton = document.createElement('button');
-            deleteButton.className = 'delete-rule';
-            deleteButton.type = 'button';
-            deleteButton.textContent = 'Eliminar';
-            deleteButton.setAttribute('aria-label', `Eliminar regla ${name} de ${layerName}`);
-            deleteButton.addEventListener('click', () => removeConfiguredRule(layerName, name));
-            item.append(description, deleteButton);
+            label.append(toggle, description);
+            item.append(label);
             list.append(item);
         });
         card.append(list);
@@ -398,28 +463,42 @@ function renderConfiguredRules(layers) {
     });
 }
 
-async function removeConfiguredRule(layerName, ruleName) {
-    if (!window.confirm(`¿Eliminar la regla "${ruleName}" de "${layerName}"?`)) return;
+async function updateRuleEnabled(layerName, ruleName, enabled) {
+    await updateRuleConfiguration(
+        `/api/rules/${encodeURIComponent(layerName)}/${encodeURIComponent(ruleName)}`,
+        {enabled},
+        enabled ? `Se activó la regla ${ruleName}.` : `Se desactivó la regla ${ruleName}.`,
+    );
+}
 
-    setRulesStatus('Eliminando regla…');
+async function updateLayerEnabled(layerName, enabled) {
+    await updateRuleConfiguration(
+        `/api/rules/${encodeURIComponent(layerName)}`,
+        {enabled},
+        enabled
+            ? `Se activaron las reglas de ${layerName}.`
+            : `Se desactivaron las reglas de ${layerName}.`,
+    );
+}
+
+async function updateRuleConfiguration(url, body, successMessage) {
+    setRulesStatus('Guardando configuración…');
     try {
-        const response = await fetch(
-            `/api/rules/${encodeURIComponent(layerName)}/${encodeURIComponent(ruleName)}`,
-            {method: 'DELETE'},
-        );
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body),
+        });
         const payload = await response.json();
         if (!response.ok || !payload.ok) {
-            throw new Error(payload.message || 'No se pudo eliminar la regla.');
+            throw new Error(payload.message || 'No se pudo actualizar la configuración.');
         }
 
         renderConfiguredRules(payload.layers);
-        setRulesStatus(
-            payload.layers[layerName]
-                ? `Se eliminó la regla ${ruleName}.`
-                : `Se eliminó la última regla y la capa ${layerName}.`,
-        );
+        setRulesStatus(successMessage);
     } catch (error) {
-        setRulesStatus(error.message || 'No se pudo eliminar la regla.', true);
+        setRulesStatus(error.message || 'No se pudo actualizar la configuración.', true);
+        await loadRuleConfiguration();
     }
 }
 
@@ -518,7 +597,12 @@ function render(payload) {
     }
     payload.results.forEach((layer) => {
         $layerHeader = $("<h2>").text(layer.layer);
-        $layerInfo = $("<p>").html(`${layer.rule_count} reglas · ${layer.error_count} errores`);
+        const layerStatus = layer.status === 'deshabilitada'
+            ? 'Capa deshabilitada'
+            : layer.status === 'sin_reglas_activas'
+                ? 'Sin reglas activas'
+                : `${layer.rule_count} reglas · ${layer.error_count} errores`;
+        $layerInfo = $("<p>").text(layerStatus);
         $layerRules = $("<div>");
         layer.rules.forEach((rule) => {
             $ruleDiv = $("<div>").addClass("rule");

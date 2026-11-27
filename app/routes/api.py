@@ -1,13 +1,13 @@
-import mimetypes
 import tempfile
 from pathlib import Path
 import json 
-from flask import send_from_directory, current_app
+from flask import send_from_directory,Blueprint, Response, current_app, jsonify, request
 import os
 from tkinter import Tk, filedialog
+from  concurrent.futures import ThreadPoolExecutor
+from threading import Lock
+import uuid
 
-from flask import Blueprint, Response, current_app, jsonify, request
-from werkzeug.utils import secure_filename
 from app.services.geospatial import (
     SHAPEFILE_COMPONENTS,
     convert_geopackage_layers,
@@ -20,25 +20,12 @@ from app.services.validation_service import prepare_and_validate
 from app.services.rules_service import (
     RULE_METHODS,
     add_layer_rules,
-    delete_rule,
     load_rules,
+    set_layer_enabled,
+    set_rule_enabled,
 )
 
 api_bp = Blueprint("api", __name__)
-
-
-def _get_windows_client_user():
-    candidates = (
-        "X-Forwarded-User",
-        "X-Windows-Username",
-        "Remote-User",
-        "REMOTE_USER",
-        "X-Remote-User",
-    )
-    for name in candidates:
-        value = request.headers.get(name)
-        if value:
-            return value
 
 def _get_environ_names():
     environ_names = ("USERNAME", "USER")
@@ -46,7 +33,6 @@ def _get_environ_names():
         value = os.environ.get(name)
         if value:
             return value
-
     return request.environ.get("REMOTE_USER")
 
 
@@ -56,96 +42,6 @@ def client_user():
     if not username:
         return jsonify(ok=False, message="No se pudo determinar el usuario de Windows del cliente."), 404
     return jsonify(ok=True, username=username)
-
-
-def _save_source_files(uploads, directory, allowed_formats):
-    saved = []
-    seen_names = set()
-    for upload in uploads:
-        filename = secure_filename(upload.filename or "")
-        if not filename:
-            continue
-
-        suffix = Path(filename).suffix.lower()
-        is_shapefile_component = (
-            ".shp" in allowed_formats and suffix in SHAPEFILE_COMPONENTS
-        )
-        if suffix not in allowed_formats and not is_shapefile_component:
-            formats = ", ".join(sorted(allowed_formats))
-            raise ValueError(f"Formato no admitido: {filename}. Formatos permitidos: {formats}.")
-        if filename.casefold() in seen_names:
-            raise ValueError(f"Se recibió más de un archivo llamado {filename}.")
-        seen_names.add(filename.casefold())
-
-        target = directory / filename
-        upload.save(target)
-        saved.append(target)
-
-    if not saved:
-        raise ValueError("Selecciona una capa para continuar.")
-
-    sources = [path for path in saved if path.suffix.lower() in allowed_formats]
-    if len(sources) != 1:
-        raise ValueError("Selecciona exactamente una capa de origen.")
-
-    source = sources[0]
-    if source.suffix.lower() == ".shp":
-        matching_files = [
-            path for path in saved if path.stem.casefold() == source.stem.casefold()
-        ]
-        if len(matching_files) != len(saved):
-            raise ValueError("Los componentes del Shapefile deben compartir el mismo nombre.")
-        components = {path.suffix.lower() for path in matching_files}
-        missing = {".shx", ".dbf"} - components
-        if missing:
-            raise ValueError(
-                "Para cargar un Shapefile selecciona también sus archivos .shx y .dbf."
-            )
-    elif len(saved) != 1:
-        raise ValueError("Selecciona un solo archivo para este formato.")
-
-    return source
-
-
-def _tool_download(operation, allowed_formats):
-    temporary = tempfile.TemporaryDirectory(
-        prefix="capa-", dir=current_app.config["RESULTS_FOLDER"]
-    )
-    directory = Path(temporary.name)
-    try:
-        source = _save_source_files(
-            request.files.getlist("files"), directory, allowed_formats
-        )
-        output = operation(source, directory, request.form.getlist("selectedLayers"))
-        mimetype = mimetypes.guess_type(output.name)[0] or "application/octet-stream"
-
-        def stream_output():
-            try:
-                with output.open("rb") as stream:
-                    while chunk := stream.read(64 * 1024):
-                        yield chunk
-            finally:
-                temporary.cleanup()
-
-        response = Response(
-            stream_output(),
-            mimetype=mimetype,
-            headers={
-                "Content-Disposition": f'attachment; filename="{output.name}"',
-                "Content-Length": str(output.stat().st_size),
-                "X-Content-Type-Options": "nosniff",
-            },
-        )
-        response.call_on_close(temporary.cleanup)
-        return response
-    except ValueError as exc:
-        temporary.cleanup()
-        return jsonify(ok=False, message=str(exc)), 400
-    except Exception:
-        current_app.logger.exception("Error al procesar una capa geoespacial.")
-        temporary.cleanup()
-        return jsonify(ok=False, message="Ocurrió un error al procesar la capa."), 500
-
 
 @api_bp.post("/validate")
 def validate():
@@ -191,32 +87,42 @@ def create_layer_rules():
         return jsonify(ok=False, message=str(exc)), 500
 
 
-@api_bp.delete("/rules/<layer_name>/<rule_name>")
-def remove_layer_rule(layer_name, rule_name):
+@api_bp.patch("/rules/<layer_name>")
+def update_layer_enabled(layer_name):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify(ok=False, message="Se requiere indicar el estado de la capa."), 400
     try:
-        rules = delete_rule(layer_name, rule_name)
+        enabled = payload.get("enabled")
+        rules = set_layer_enabled(layer_name, enabled)
         return jsonify(ok=True, layers=rules)
+    except KeyError as exc:
+        return jsonify(ok=False, message=exc.args[0]), 404
     except ValueError as exc:
-        return jsonify(ok=False, message=str(exc)), 404
+        return jsonify(ok=False, message=str(exc)), 400
     except RuntimeError as exc:
-        current_app.logger.exception("No se pudo eliminar la regla.")
+        current_app.logger.exception("No se pudo actualizar el estado de la capa.")
         return jsonify(ok=False, message=str(exc)), 500
 
 
-@api_bp.post("/convert")
-def convert():
-    formats = {".geojson", ".json", ".gpkg", ".shp"}
+@api_bp.patch("/rules/<layer_name>/<rule_name>")
+def update_rule_enabled(layer_name, rule_name):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify(ok=False, message="Se requiere indicar el estado de la regla."), 400
+    try:
+        enabled = payload.get("enabled")
+        rules = set_rule_enabled(layer_name, rule_name, enabled)
+        return jsonify(ok=True, layers=rules)
+    except KeyError as exc:
+        return jsonify(ok=False, message=exc.args[0]), 404
+    except ValueError as exc:
+        return jsonify(ok=False, message=str(exc)), 400
+    except RuntimeError as exc:
+        current_app.logger.exception("No se pudo actualizar el estado de la regla.")
+        return jsonify(ok=False, message=str(exc)), 500
 
-    def operation(source, directory, selected_layers):
-        if source.suffix.lower() == ".gpkg":
-            return convert_geopackage_layers(source, selected_layers, directory)
-        return convert_to_geoparquet(Path(source), f"{directory}/{source.stem}.parquet")
 
-    datos=json.loads(request.get_data())
-    source= Path(datos.get("gpkg", ""))
-    selected_layers=datos.get("layers", [])
-
-    return jsonify(ok=True, result=operation(source, tempfile.mkdtemp(prefix="capa-", dir=current_app.config["RESULTS_FOLDER"]), selected_layers))
 
 @api_bp.post("/gpkg_layers")
 def gpkg_layers():
@@ -254,7 +160,6 @@ def download(job_id, filename):
         return jsonify(ok=False, message="Trabajo no encontrado."), 404
     return send_from_directory(job_folder, f"errores_{filename}.gpkg", as_attachment=True )
 
-
 @api_bp.get("/descargar/<folder>/<file>")
 def descargar(folder,file):
     print(folder,file)
@@ -282,6 +187,62 @@ def seleccionar_archivo(multi):
     if not ruta:
         return jsonify({"ok":False,"message":"No se pudo seleccionar el archivo"})
     return jsonify({"ok":True,"ruta":ruta})
+
+
+ejecutor = ThreadPoolExecutor(max_workers=4)
+tareas = {}
+tareas_bloqueada = Lock() 
+
+#@api_bp.post("/convert")
+def convert(tarea_id:str,datos):
+    def operation(source, directory, selected_layers):
+        if source.suffix.lower() == ".gpkg":
+            return convert_geopackage_layers(source, selected_layers, directory)
+        return convert_to_geoparquet(Path(source), f"{directory}/{source.stem}.parquet")
+    
+    try:
+        source= Path(datos.get("gpkg", ""))
+        selected_layers=datos.get("layers", [])
+        result = operation(source, tempfile.mkdtemp(prefix="capa-", dir=current_app.config["RESULTS_FOLDER"]), selected_layers)
+        with tareas_bloqueada:
+            tareas[tarea_id]["estado"] ="Completado"
+            tareas[tarea_id]["progreso"] = 100
+            tareas[tarea_id]["message"] = "Proceso Terminado con éxito"
+            tareas[tarea_id]["resultado"] = result
+    except Exception as exc:
+        with tareas_bloqueada:
+            tareas[tarea_id]["estado"]= "Fallido"
+            tareas[tarea_id]["mensaje"]="Ocurrio un error durante el proceso"
+            tareas[tarea_id]["error"] = str(exc)
+ 
+@api_bp.post("/comenzar_tarea")
+def comenzar_tarea():
+    data=request.get_json(silent=True) or {}
+    total_pasos = int(data.get("total_pasos",4))
+    total_pasos = max(1,min(total_pasos,20))
+    tarea_id = str(uuid.uuid4())
+
+    with tareas_bloqueada:
+        tareas[tarea_id]={
+            "id":tarea_id,
+            "estado":"corriendo",
+            "progreso":0,
+            "message":"Tarea iniciada....",
+            "result":None,
+            "error":None
+        }
+
+    ejecutor.submit(convert,tarea_id,data)
+    return jsonify({"id_tarea":tarea_id,"estado":"corriendo"}),202
+
+@api_bp.get("/estado_trabajos/<tarea_id>")
+def estado_trabajos(tarea_id:str):
+    with tareas_bloqueada:
+        tarea=tareas.get(tarea_id)
+        if not tarea:
+            return jsonify({"error":"Tarea no encontrada"}),404
+        snapshot = dict(tarea)
+    return jsonify(snapshot),200
 
 
 

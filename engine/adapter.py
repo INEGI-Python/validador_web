@@ -53,14 +53,37 @@ def validate_layer(folder: Path, layer_name: str, name_rule:str):
             "Falta integrar engine/topologias.py. "
             f"Detalle: {IMPORT_ERROR}"
         )
-    rules = load_rules().get(name_rule)
-    if not rules:
+    layer_rules = load_rules().get(name_rule)
+    if not layer_rules:
         return {
             "layer": name_rule,
             "status": "sin_reglas",
             "rule_count": 0,
             "error_count": 0,
             "rules": []
+        }
+
+    if layer_rules.get("_enabled", True) is False:
+        return {
+            "layer": name_rule,
+            "status": "deshabilitada",
+            "rule_count": 0,
+            "error_count": 0,
+            "rules": [],
+        }
+
+    rules = {
+        name: {key: value for key, value in rule.items() if key != "enabled"}
+        for name, rule in layer_rules.items()
+        if name != "_enabled" and rule.get("enabled", True) is not False
+    }
+    if not rules:
+        return {
+            "layer": name_rule,
+            "status": "sin_reglas_activas",
+            "rule_count": 0,
+            "error_count": 0,
+            "rules": [],
         }
 
     # Tu motor concatena ruta + capa + '.parquet', por eso conservamos '/' final.

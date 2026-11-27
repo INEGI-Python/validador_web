@@ -70,15 +70,39 @@ def add_layer_rules(payload):
     raise ValueError("La opción para agregar capas fue eliminada.")
 
 
-def delete_rule(layer_name, rule_name):
+def set_layer_enabled(layer_name, enabled):
+    if not isinstance(enabled, bool):
+        raise ValueError("El estado de la capa debe ser verdadero o falso.")
+
     rules = load_rules()
     if layer_name not in rules:
-        raise ValueError(f"No existe la capa {layer_name}.")
-    if rule_name not in rules[layer_name]:
-        raise ValueError(f"No existe la regla {rule_name} en {layer_name}.")
+        raise KeyError(f"No existe la capa {layer_name}.")
 
-    del rules[layer_name][rule_name]
-    if not rules[layer_name]:
-        del rules[layer_name]
+    layer_rules = rules[layer_name]
+    for rule_name, rule in layer_rules.items():
+        if rule_name != "_enabled":
+            rule["enabled"] = enabled
+    layer_rules.pop("_enabled", None)
+    save_rules(rules)
+    return rules
+
+
+def set_rule_enabled(layer_name, rule_name, enabled):
+    if not isinstance(enabled, bool):
+        raise ValueError("El estado de la regla debe ser verdadero o falso.")
+
+    rules = load_rules()
+    if layer_name not in rules:
+        raise KeyError(f"No existe la capa {layer_name}.")
+    layer_rules = rules[layer_name]
+    if rule_name not in layer_rules or rule_name == "_enabled":
+        raise KeyError(f"No existe la regla {rule_name} en {layer_name}.")
+
+    if layer_rules.get("_enabled") is False:
+        for current_rule_name, rule in layer_rules.items():
+            if current_rule_name != "_enabled":
+                rule["enabled"] = False
+    layer_rules.pop("_enabled", None)
+    layer_rules[rule_name]["enabled"] = enabled
     save_rules(rules)
     return rules

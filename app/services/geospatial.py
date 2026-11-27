@@ -80,7 +80,7 @@ def convert_geopackage_layers(source_path, selected_layers, output_dir):
     outputs = []
     for index, layer_name in enumerate(layers, start=1):
         safe_name = secure_filename(layer_name) or "capa"
-        output_path = f"{output_dir}/{index}_{safe_name}.parquet"
+        output_path = f"{output_dir}/{safe_name}.parquet"
         outputs.append(convert_to_geoparquet(Path(source_path), output_path, layer_name))
 
     outzip_path = f"{output_dir}/{source_path.stem}_capas.zip"
